@@ -21,11 +21,15 @@ data class Budget(
     val categories: List<Category>
 )
 
+enum class CategoryStatus { PENDING, IN_PROGRESS, COMPLETED }
+
 data class Category(
     val id: String,
     val name: String,
     val allocatedAmount: Double,
-    val percentage: Double
+    val percentage: Double,
+    val icon: String = "default",
+    val status: CategoryStatus = CategoryStatus.PENDING
 )
 
 @Entity(tableName = "goals")
