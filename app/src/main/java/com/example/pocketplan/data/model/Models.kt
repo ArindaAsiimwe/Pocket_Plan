@@ -1,14 +1,20 @@
 package com.example.pocketplan.data.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
+
+@Entity(tableName = "users")
 data class User(
-    val id: String,
+    @PrimaryKey val id: String,
     val name: String,
     val email: String,
     val passwordHash: String
 )
 
+@Entity(tableName = "budgets")
 data class Budget(
-    val id: String,
+    @PrimaryKey val id: String,
     val userId: String,
     val totalAmount: Double,
     val months: List<String>,
@@ -22,8 +28,9 @@ data class Category(
     val percentage: Double
 )
 
+@Entity(tableName = "goals")
 data class Goal(
-    val id: String,
+    @PrimaryKey val id: String,
     val userId: String,
     val name: String,
     val targetAmount: Double,
@@ -31,8 +38,9 @@ data class Goal(
     val status: String // e.g., "Active", "Completed"
 )
 
+@Entity(tableName = "expenses")
 data class Expense(
-    val id: String,
+    @PrimaryKey val id: String,
     val userId: String,
     val amount: Double,
     val categoryId: String,
