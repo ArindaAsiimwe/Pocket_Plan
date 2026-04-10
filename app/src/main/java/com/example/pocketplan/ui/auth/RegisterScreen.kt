@@ -131,7 +131,7 @@ fun RegisterScreen(onRegisterClick: () -> Unit, onLoginClick: () -> Unit) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Already have an account? ", color = TextGray)
+                    Text("Already have an account? ", color = TextSecondary)
                     TextButton(onClick = onLoginClick) {
                         Text("Login", color = PrimaryBlue, fontWeight = FontWeight.Bold)
                     }

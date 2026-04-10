@@ -109,7 +109,7 @@ fun LoginScreen(onLoginClick: () -> Unit, onRegisterClick: () -> Unit) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Don't have an account? ", color = TextGray)
+                    Text("Don't have an account? ", color = TextSecondary)
                     TextButton(onClick = onRegisterClick) {
                         Text("Register", color = PrimaryBlue, fontWeight = FontWeight.Bold)
                     }
