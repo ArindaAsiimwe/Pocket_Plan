@@ -5,28 +5,20 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
-import com.example.pocketplan.ui.auth.LoginScreen
-import com.example.pocketplan.ui.auth.RegisterScreen
+import androidx.navigation.compose.rememberNavController
+import com.example.pocketplan.ui.navigation.AppNavGraph
 import com.example.pocketplan.ui.theme.PocketPlanTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             PocketPlanTheme {
-                var currentScreen by remember { mutableStateOf("login") }
-
-                when (currentScreen) {
-                    "login" -> LoginScreen(
-                        onLoginClick = { /* Navigate to Home */ },
-                        onRegisterClick = { currentScreen = "register" }
-                    )
-                    "register" -> RegisterScreen(
-                        onRegisterClick = { /* Handle registration */ },
-                        onLoginClick = { currentScreen = "login" }
-                    )
-                }
+                val navController = rememberNavController()
+                AppNavGraph(navController = navController)
             }
         }
     }
