@@ -10,7 +10,7 @@ A student budgeting and expense tracking Android app that helps university stude
 | Lutalo Allan | 22/U/3330/PS |
 | Tukwasiibwe Martin | 22/U/21816/eve |
 | Arinda Asiimwe Atweta | 22/U/5799 |
-| Nyonyozi Maria Lisa Loyse | 23/U/1642/eve |
+| Nyonyozi Maria Lisa Loyse | 23/U/16424/eve |
 | Beguya Melissa Deborah | 20/U/7756/PS |
 
 ---
