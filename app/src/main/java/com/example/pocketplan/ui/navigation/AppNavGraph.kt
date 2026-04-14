@@ -22,8 +22,7 @@ import com.example.pocketplan.ui.insights.InsightsScreen
 fun AppNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route
-    ) {
+        startDestination = Screen.Login.route    ) {
         composable(Screen.Login.route) {
             LoginScreen(
                 onLoginClick = {
