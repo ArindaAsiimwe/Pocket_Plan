@@ -22,8 +22,7 @@ import com.example.pocketplan.ui.insights.InsightsScreen
 fun AppNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route
-    ) {
+        startDestination = Screen.Login.route    ) {
         composable(Screen.Login.route) {
             LoginScreen(
                 onLoginClick = {
@@ -62,11 +61,11 @@ fun AppNavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val budgetId = backStackEntry.arguments?.getString("budgetId") ?: ""
             val budgetViewModel: BudgetViewModel = viewModel()
-            
+
             LaunchedEffect(budgetId) {
                 budgetViewModel.loadBudget(budgetId)
             }
-            
+
             BudgetSetupScreen(
                 viewModel = budgetViewModel,
                 onBack = { navController.popBackStack() }
