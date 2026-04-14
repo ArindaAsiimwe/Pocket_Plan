@@ -341,7 +341,7 @@ fun ExpenseListItem(
     expenseName: String,
     categoryTag: String,
     timeLabel: String,
-    amount: Long,
+    amount: Double,
     modifier: Modifier = Modifier
 ) {
     Row(

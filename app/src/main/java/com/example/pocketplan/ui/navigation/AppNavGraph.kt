@@ -61,11 +61,11 @@ fun AppNavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val budgetId = backStackEntry.arguments?.getString("budgetId") ?: ""
             val budgetViewModel: BudgetViewModel = viewModel()
-            
+
             LaunchedEffect(budgetId) {
                 budgetViewModel.loadBudget(budgetId)
             }
-            
+
             BudgetSetupScreen(
                 viewModel = budgetViewModel,
                 onBack = { navController.popBackStack() }
