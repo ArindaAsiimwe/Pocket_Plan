@@ -3,11 +3,13 @@ package com.example.pocketplan.ui.budget
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.example.pocketplan.data.model.Category
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import java.util.UUID
+import javax.inject.Inject
 
 data class BudgetUiState(
     val id: String = "",
@@ -22,7 +24,8 @@ data class BudgetUiState(
     val attachedImageUri: Uri? = null
 )
 
-class BudgetViewModel : ViewModel() {
+@HiltViewModel
+class BudgetViewModel @Inject constructor() : ViewModel() {
     private val _uiState = MutableStateFlow(BudgetUiState())
     val uiState: StateFlow<BudgetUiState> = _uiState.asStateFlow()
 
