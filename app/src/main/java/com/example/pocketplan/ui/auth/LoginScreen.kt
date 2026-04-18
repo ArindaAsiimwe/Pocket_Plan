@@ -15,105 +15,123 @@ import androidx.compose.ui.unit.sp
 import com.example.pocketplan.ui.theme.*
 
 @Composable
-fun LoginScreen(onLoginClick: () -> Unit, onRegisterClick: () -> Unit) {
+fun LoginScreen(
+    state: AuthUiState,
+    onLoginClick: (String, String) -> Unit,
+    onRegisterClick: () -> Unit
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(PrimaryBlue)
-            .padding(top = 64.dp)
-    ) {
-        Text(
-            text = "Welcome Back",
-            color = Color.White,
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 24.dp)
-        )
-        Text(
-            text = "Login to track your expenses",
-            color = Color.White.copy(alpha = 0.8f),
-            fontSize = 16.sp,
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
-        )
-
-        Spacer(modifier = Modifier.height(48.dp))
-
-        Surface(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .fillMaxSize(),
-            color = BackgroundLight,
-            shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp)
+                .fillMaxSize()
+                .background(PrimaryBlue)
+                .padding(top = 64.dp)
         ) {
-            Column(
+            Text(
+                text = "Welcome Back",
+                color = Color.White,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 24.dp)
+            )
+            Text(
+                text = "Login to track your expenses",
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 16.sp,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            Surface(
                 modifier = Modifier
-                    .padding(24.dp)
-                    .fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .fillMaxSize(),
+                color = BackgroundLight,
+                shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp)
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Email Address") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrimaryBlue,
-                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Password") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PrimaryBlue,
-                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                TextButton(
-                    onClick = { /* Handle forgot password */ },
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Text("Forgot Password?", color = PrimaryBlue)
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Button(
-                    onClick = onLoginClick,
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
+                        .padding(24.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Login", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                }
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email Address") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
+                        )
+                    )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Don't have an account? ", color = TextSecondary)
-                    TextButton(onClick = onRegisterClick) {
-                        Text("Register", color = PrimaryBlue, fontWeight = FontWeight.Bold)
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = { Text("Password") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryBlue,
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    TextButton(
+                        onClick = { /* Handle forgot password */ },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("Forgot Password?", color = PrimaryBlue)
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = { onLoginClick(email, password) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                        enabled = !state.isLoading
+                    ) {
+                        Text("Login", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Don't have an account? ", color = TextSecondary)
+                        TextButton(onClick = onRegisterClick) {
+                            Text("Register", color = PrimaryBlue, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
+            }
+        }
+
+        if (state.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = PrimaryBlue)
             }
         }
     }

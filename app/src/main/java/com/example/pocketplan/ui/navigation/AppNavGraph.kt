@@ -2,18 +2,17 @@ package com.example.pocketplan.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
+import com.example.pocketplan.ui.auth.AuthViewModel
 import com.example.pocketplan.ui.auth.LoginScreen
 import com.example.pocketplan.ui.auth.RegisterScreen
 import com.example.pocketplan.ui.budget.BudgetSetupScreen
 import com.example.pocketplan.ui.budget.BudgetViewModel
-import com.example.pocketplan.ui.budget.SemesterBudgetsScreen
-import com.example.pocketplan.ui.budget.SemesterBudgetsViewModel
 import com.example.pocketplan.ui.goals.GoalsScreen
 import com.example.pocketplan.ui.tracking.ExpenseTrackingScreen
 import com.example.pocketplan.ui.insights.InsightsScreen
@@ -22,52 +21,54 @@ import com.example.pocketplan.ui.insights.InsightsScreen
 fun AppNavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route    ) {
+        startDestination = Screen.Login.route
+    ) {
         composable(Screen.Login.route) {
-            LoginScreen(
-                onLoginClick = {
-                    navController.navigate(Screen.SemesterBudgets.route) {
+            val viewModel: AuthViewModel = hiltViewModel()
+            val state by viewModel.uiState.collectAsState()
+            
+            LaunchedEffect(state.isSuccess) {
+                if (state.isSuccess) {
+                    navController.navigate(Screen.BudgetSetup.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
-                },
+                }
+            }
+
+            LoginScreen(
+                state = state,
+                onLoginClick = { email, pass -> viewModel.login(email, pass) },
                 onRegisterClick = { navController.navigate(Screen.Register.route) }
             )
         }
         composable(Screen.Register.route) {
-            RegisterScreen(
-                onRegisterClick = {
-                    navController.navigate(Screen.SemesterBudgets.route) {
+            val viewModel: AuthViewModel = hiltViewModel()
+            val state by viewModel.uiState.collectAsState()
+
+            LaunchedEffect(state.isSuccess) {
+                if (state.isSuccess) {
+                    navController.navigate(Screen.BudgetSetup.route) {
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
-                },
+                }
+            }
+
+            RegisterScreen(
+                state = state,
+                onRegisterClick = { name, email, pass -> viewModel.register(name, email, pass) },
                 onLoginClick = { navController.popBackStack() }
             )
         }
-        composable(Screen.SemesterBudgets.route) {
-            val viewModel: SemesterBudgetsViewModel = viewModel()
-            SemesterBudgetsScreen(
-                viewModel = viewModel,
-                onBudgetClick = { budgetId ->
-                    navController.navigate(Screen.BudgetSetup.createRoute(budgetId))
-                },
-                onCreateConfirmed = { budgetId ->
-                    navController.navigate(Screen.BudgetSetup.createRoute(budgetId))
-                }
-            )
-        }
-        composable(
-            route = Screen.BudgetSetup.route,
-            arguments = listOf(navArgument("budgetId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val budgetId = backStackEntry.arguments?.getString("budgetId") ?: ""
-            val budgetViewModel: BudgetViewModel = viewModel()
-
+        composable(Screen.BudgetSetup.route) { backStackEntry ->
+            val viewModel: BudgetViewModel = hiltViewModel()
+            val budgetId = backStackEntry.arguments?.getString("budgetId") ?: "new"
+            
             LaunchedEffect(budgetId) {
-                budgetViewModel.loadBudget(budgetId)
+                viewModel.loadBudget(budgetId)
             }
 
             BudgetSetupScreen(
-                viewModel = budgetViewModel,
+                viewModel = viewModel,
                 onBack = { navController.popBackStack() }
             )
         }
