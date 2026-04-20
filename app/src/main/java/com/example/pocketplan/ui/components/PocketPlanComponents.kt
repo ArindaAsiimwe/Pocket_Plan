@@ -601,7 +601,7 @@ fun CategoryStatusRow(
                 color = TextPrimary
             )
             Text(
-                text = CurrencyUtils.formatToUGX(category.allocatedAmount),
+                text = CurrencyUtils.formatToUGX(category.allocatedAmount.toDouble()),
                 style = MaterialTheme.typography.bodySmall,
                 color = TextSecondary
             )

@@ -19,8 +19,8 @@ data class SemesterBudgetsUiState(
             isFullyAllocated = true,
             createdDate = "Mar 2026",
             categories = listOf(
-                Category("1", "Rent", 800_000.0, 32.0, "home", CategoryStatus.PENDING),
-                Category("2", "Tuition", 1_000_000.0, 40.0, "school", CategoryStatus.IN_PROGRESS)
+                Category("1", "Rent", 800_000, 32, "home", CategoryStatus.PENDING),
+                Category("2", "Tuition", 1_000_000, 40, "school", CategoryStatus.IN_PROGRESS)
             )
         )
     ),

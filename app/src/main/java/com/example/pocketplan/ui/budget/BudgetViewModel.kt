@@ -17,11 +17,12 @@ data class BudgetUiState(
     val totalFunds: Long = 2_500_000L,
     val selectedMonths: List<String> = listOf("Jan", "Feb", "Mar", "Apr", "May"),
     val categories: List<Category> = listOf(
-        Category("1", "Rent", 800_000.0, 32.0),
-        Category("2", "Tuition", 1_000_000.0, 40.0)
+        Category("1", "Rent", 800_000, 32, "home"),
+        Category("2", "Tuition", 1_000_000, 40, "school")
     ),
     val isEditing: Boolean = false,
-    val attachedImageUri: Uri? = null
+    val attachedImageUri: Uri? = null,
+    val expandedAttachmentIds: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -52,16 +53,23 @@ class BudgetViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun addCategory(name: String, percentage: Int) {
+    fun addCategory(name: String) {
         if (!_uiState.value.isEditing) return
         _uiState.update { state ->
             val newCategory = Category(
                 id = UUID.randomUUID().toString(),
                 name = name,
-                allocatedAmount = (state.totalFunds * percentage / 100.0),
-                percentage = percentage.toDouble()
+                allocatedAmount = 0L,
+                percentage = 0
             )
             state.copy(categories = state.categories + newCategory)
+        }
+    }
+
+    fun removeCategory(categoryId: String) {
+        if (!_uiState.value.isEditing) return
+        _uiState.update { state ->
+            state.copy(categories = state.categories.filter { it.id != categoryId })
         }
     }
 
@@ -71,8 +79,8 @@ class BudgetViewModel @Inject constructor() : ViewModel() {
             val updatedCategories = state.categories.map { category ->
                 if (category.id == categoryId) {
                     category.copy(
-                        percentage = percentage.toDouble(),
-                        allocatedAmount = (state.totalFunds * percentage / 100.0)
+                        percentage = percentage,
+                        allocatedAmount = (state.totalFunds * percentage / 100.0).toLong()
                     )
                 } else {
                     category
@@ -87,9 +95,9 @@ class BudgetViewModel @Inject constructor() : ViewModel() {
         _uiState.update { state ->
             val updatedCategories = state.categories.map { category ->
                 if (category.id == categoryId) {
-                    val percentage = if (state.totalFunds > 0) (amount / state.totalFunds) * 100.0 else 0.0
+                    val percentage = if (state.totalFunds > 0) ((amount / state.totalFunds) * 100.0).toInt() else 0
                     category.copy(
-                        allocatedAmount = amount,
+                        allocatedAmount = amount.toLong(),
                         percentage = percentage
                     )
                 } else {
@@ -103,7 +111,31 @@ class BudgetViewModel @Inject constructor() : ViewModel() {
     private fun recalculateCategoryAmounts() {
         _uiState.update { state ->
             val updatedCategories = state.categories.map { category ->
-                category.copy(allocatedAmount = (state.totalFunds * category.percentage / 100.0))
+                category.copy(allocatedAmount = (state.totalFunds * category.percentage / 100.0).toLong())
+            }
+            state.copy(categories = updatedCategories)
+        }
+    }
+
+    fun toggleAttachmentSection(categoryId: String) {
+        _uiState.update { state ->
+            val newExpanded = if (state.expandedAttachmentIds.contains(categoryId)) {
+                state.expandedAttachmentIds - categoryId
+            } else {
+                state.expandedAttachmentIds + categoryId
+            }
+            state.copy(expandedAttachmentIds = newExpanded)
+        }
+    }
+
+    fun updateCategoryPhoto(categoryId: String, uri: Uri?) {
+        _uiState.update { state ->
+            val updatedCategories = state.categories.map { category ->
+                if (category.id == categoryId) {
+                    category.copy(attachedImageUri = uri)
+                } else {
+                    category
+                }
             }
             state.copy(categories = updatedCategories)
         }
