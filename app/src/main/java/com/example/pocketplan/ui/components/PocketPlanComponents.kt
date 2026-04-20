@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -28,11 +30,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.pocketplan.data.model.Category
 import com.example.pocketplan.data.model.CategoryStatus
 import com.example.pocketplan.ui.budget.BudgetSummary
 import com.example.pocketplan.ui.theme.*
 import com.example.pocketplan.utils.CurrencyUtils
+import androidx.navigation.NavHostController
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.pocketplan.ui.navigation.Screen
 
 /**
  * 1. PocketPlanTopBar
@@ -198,8 +205,7 @@ fun CategoryAllocationCard(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+                verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = BackgroundLight,
@@ -663,3 +669,80 @@ fun StatusChip(status: CategoryStatus, onClick: () -> Unit) {
         }
     }
 }
+
+/**
+ * 12. PocketPlanBottomBar
+ * Reusable bottom navigation bar that is docked to the bottom of the screen.
+ */
+@Composable
+fun PocketPlanBottomBar(navController: NavHostController) {
+    val items = listOf(
+        NavigationItem("Budgets", Screen.SemesterBudgets.route, Icons.Default.AccountBalance),
+        NavigationItem("Tracking", Screen.Tracking.route, Icons.AutoMirrored.Filled.ReceiptLong),
+        NavigationItem("Goals", Screen.Goals.route, Icons.Default.Flag),
+        NavigationItem("Insights", Screen.Insights.route, Icons.Default.BarChart)
+    )
+
+    Surface(
+        color = Color.White,
+        tonalElevation = 0.dp
+    ) {
+        Column {
+            HorizontalDivider(color = ChipUnselected.copy(alpha = 0.5f), thickness = 1.dp)
+            NavigationBar(
+                containerColor = Color.Transparent,
+                tonalElevation = 0.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
+
+                items.forEach { item ->
+                    val isSelected = currentRoute == item.route || (item.route == Screen.SemesterBudgets.route && currentRoute?.startsWith("budget_setup") == true)
+                    
+                    NavigationBarItem(
+                        selected = isSelected,
+                        onClick = {
+                            if (currentRoute != item.route) {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = item.icon,
+                                contentDescription = item.title
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = item.title,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                )
+                            )
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = PrimaryBlue,
+                            selectedTextColor = PrimaryBlue,
+                            unselectedIconColor = TextSecondary,
+                            unselectedTextColor = TextSecondary,
+                            indicatorColor = SecondaryBlue.copy(alpha = 0.1f)
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
+
+private data class NavigationItem(
+    val title: String,
+    val route: String,
+    val icon: ImageVector
+)

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -13,15 +14,21 @@ import com.example.pocketplan.ui.auth.LoginScreen
 import com.example.pocketplan.ui.auth.RegisterScreen
 import com.example.pocketplan.ui.budget.BudgetSetupScreen
 import com.example.pocketplan.ui.budget.BudgetViewModel
+import com.example.pocketplan.ui.budget.SemesterBudgetsScreen
+import com.example.pocketplan.ui.budget.SemesterBudgetsViewModel
 import com.example.pocketplan.ui.goals.GoalsScreen
 import com.example.pocketplan.ui.tracking.ExpenseTrackingScreen
 import com.example.pocketplan.ui.insights.InsightsScreen
 
 @Composable
-fun AppNavGraph(navController: NavHostController) {
+fun AppNavGraph(
+    navController: NavHostController,
+    modifier: Modifier = Modifier
+) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Login.route
+        startDestination = Screen.Login.route,
+        modifier = modifier
     ) {
         composable(Screen.Login.route) {
             val viewModel: AuthViewModel = hiltViewModel()
@@ -29,7 +36,7 @@ fun AppNavGraph(navController: NavHostController) {
             
             LaunchedEffect(state.isSuccess) {
                 if (state.isSuccess) {
-                    navController.navigate(Screen.BudgetSetup.route) {
+                    navController.navigate(Screen.SemesterBudgets.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 }
@@ -47,7 +54,7 @@ fun AppNavGraph(navController: NavHostController) {
 
             LaunchedEffect(state.isSuccess) {
                 if (state.isSuccess) {
-                    navController.navigate(Screen.BudgetSetup.route) {
+                    navController.navigate(Screen.SemesterBudgets.route) {
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 }
@@ -57,6 +64,18 @@ fun AppNavGraph(navController: NavHostController) {
                 state = state,
                 onRegisterClick = { name, email, pass -> viewModel.register(name, email, pass) },
                 onLoginClick = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.SemesterBudgets.route) {
+            val viewModel: SemesterBudgetsViewModel = hiltViewModel()
+            SemesterBudgetsScreen(
+                viewModel = viewModel,
+                onBudgetClick = { budgetId ->
+                    navController.navigate(Screen.BudgetSetup.createRoute(budgetId))
+                },
+                onCreateConfirmed = { budgetId ->
+                    navController.navigate(Screen.BudgetSetup.createRoute(budgetId))
+                }
             )
         }
         composable(Screen.BudgetSetup.route) { backStackEntry ->
