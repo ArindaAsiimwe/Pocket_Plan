@@ -1,5 +1,6 @@
 package com.example.pocketplan.data.model
 
+import android.net.Uri
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
@@ -26,10 +27,11 @@ enum class CategoryStatus { PENDING, IN_PROGRESS, COMPLETED }
 data class Category(
     val id: String,
     val name: String,
-    val allocatedAmount: Double,
-    val percentage: Double,
+    val allocatedAmount: Long,
+    val percentage: Int,
     val icon: String = "default",
-    val status: CategoryStatus = CategoryStatus.PENDING
+    val status: CategoryStatus = CategoryStatus.PENDING,
+    val attachedImageUri: Uri? = null
 )
 
 @Entity(tableName = "goals")
