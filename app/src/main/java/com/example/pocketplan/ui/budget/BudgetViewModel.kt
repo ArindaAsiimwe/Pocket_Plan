@@ -3,6 +3,7 @@ package com.example.pocketplan.ui.budget
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.example.pocketplan.data.model.Category
+import com.example.pocketplan.data.model.CategoryStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -133,6 +134,19 @@ class BudgetViewModel @Inject constructor() : ViewModel() {
             val updatedCategories = state.categories.map { category ->
                 if (category.id == categoryId) {
                     category.copy(attachedImageUri = uri)
+                } else {
+                    category
+                }
+            }
+            state.copy(categories = updatedCategories)
+        }
+    }
+
+    fun updateCategoryStatus(categoryId: String, status: CategoryStatus) {
+        _uiState.update { state ->
+            val updatedCategories = state.categories.map { category ->
+                if (category.id == categoryId) {
+                    category.copy(status = status)
                 } else {
                     category
                 }

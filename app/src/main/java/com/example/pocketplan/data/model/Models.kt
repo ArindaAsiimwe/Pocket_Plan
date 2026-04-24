@@ -41,7 +41,8 @@ data class Goal(
     val name: String,
     val targetAmount: Double,
     val dueDate: Long,
-    val status: String // e.g., "Active", "Completed"
+    val status: String, // "PENDING", "IN_PROGRESS", "COMPLETED"
+    val attachedImageUri: String? = null
 )
 
 @Entity(tableName = "expenses")

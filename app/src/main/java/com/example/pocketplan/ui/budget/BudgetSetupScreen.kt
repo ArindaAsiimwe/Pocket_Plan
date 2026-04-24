@@ -157,34 +157,37 @@ fun SetupView(
         }
 
         items(uiState.categories) { category ->
-            CategoryAllocationCard(
+            PocketPlanCard(
+                title = category.name,
+                amount = category.allocatedAmount,
+                progressPercent = category.percentage,
+                status = category.status.name,
+                onStatusChange = { newStatus ->
+                    viewModel.updateCategoryStatus(category.id, com.example.pocketplan.data.model.CategoryStatus.valueOf(newStatus))
+                },
                 icon = when (category.icon) {
                     "home" -> Icons.Default.Home
                     "school" -> Icons.Default.School
                     else -> Icons.Default.ShoppingCart
                 },
-                categoryName = category.name,
-                allocatedAmount = category.allocatedAmount,
-                percentage = category.percentage,
-                onPercentageChange = if (uiState.isEditing) { percentage -> 
-                    viewModel.updateCategoryPercentage(category.id, percentage) 
-                } else null,
-                onClick = {
-                    if (uiState.isEditing) {
+                onAmountEdit = if (uiState.isEditing) {
+                    {
                         selectedCategoryForEdit = category
                         showEditCategoryAmountDialog = true
                     }
-                }
-            )
-            
-            CategoryPhotoAttachment(
-                categoryId = category.id,
-                categoryName = category.name,
-                attachedUri = category.attachedImageUri,
-                isExpanded = uiState.expandedAttachmentIds.contains(category.id),
-                onToggle = { viewModel.toggleAttachmentSection(category.id) },
-                onImageSelected = { uri ->
-                    viewModel.updateCategoryPhoto(category.id, uri)
+                } else null,
+                onProgressChange = if (uiState.isEditing) { percentage ->
+                    viewModel.updateCategoryPercentage(category.id, percentage)
+                } else null,
+                showStatusSelector = uiState.isEditing,
+                bottomContent = {
+                    PhotoAttachmentSection(
+                        label = category.name,
+                        attachedUri = category.attachedImageUri,
+                        onImageSelected = { uri ->
+                            viewModel.updateCategoryPhoto(category.id, uri)
+                        }
+                    )
                 }
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -309,179 +312,6 @@ fun SetupView(
             }
         )
     }
-}
-
-@Composable
-fun CategoryPhotoAttachment(
-    categoryId: String,
-    categoryName: String,
-    attachedUri: Uri?,
-    isExpanded: Boolean,
-    onToggle: () -> Unit,
-    onImageSelected: (Uri?) -> Unit
-) {
-    val context = LocalContext.current
-    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
-    
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success) onImageSelected(tempCameraUri)
-    }
-
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri -> uri?.let { onImageSelected(it) } }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            val uri = createTempImageUri(context)
-            tempCameraUri = uri
-            cameraLauncher.launch(uri)
-        }
-    }
-
-    val rotationState by animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f, label = "rotation"
-    )
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(1.dp, ChipUnselected, RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)),
-        shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp, bottomStart = 12.dp, bottomEnd = 12.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceWhite)
-    ) {
-        Column {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onToggle() }
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Outlined.CameraAlt,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                        tint = if (attachedUri == null) TextSecondary else SuccessGreen
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (attachedUri == null) "Attach proof photo" else "Photo attached",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (attachedUri == null) TextSecondary else SuccessGreen
-                    )
-                }
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = TextSecondary,
-                    modifier = Modifier.rotate(rotationState)
-                )
-            }
-
-            AnimatedVisibility(
-                visible = isExpanded,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 12.dp)
-                        .padding(bottom = 8.dp, top = 4.dp)
-                ) {
-                    if (attachedUri != null) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(160.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                        ) {
-                            AsyncImage(
-                                model = attachedUri,
-                                contentDescription = "Attached proof for $categoryName",
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                            IconButton(
-                                onClick = { onImageSelected(null) },
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(4.dp)
-                                    .background(SurfaceWhite, CircleShape)
-                                    .size(24.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Remove photo",
-                                    modifier = Modifier.size(16.dp),
-                                    tint = TextPrimary
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                permissionLauncher.launch(android.Manifest.permission.CAMERA)
-                            },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(8.dp),
-                            border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(SecondaryBlue)),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = SecondaryBlue)
-                        ) {
-                            Icon(Icons.Outlined.CameraAlt, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Take Photo", style = MaterialTheme.typography.bodySmall)
-                        }
-
-                        OutlinedButton(
-                            onClick = { galleryLauncher.launch("image/*") },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(8.dp),
-                            border = ButtonDefaults.outlinedButtonBorder.copy(brush = androidx.compose.ui.graphics.SolidColor(SecondaryBlue)),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = SecondaryBlue)
-                        ) {
-                            Icon(Icons.Outlined.Photo, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("From Gallery", style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-private fun createTempImageUri(context: Context): Uri {
-    val fileName = "pocket_plan_photo_${System.currentTimeMillis()}.jpg"
-    val file = File(context.cacheDir, fileName)
-    
-    // Ensure the cache directory exists
-    if (!context.cacheDir.exists()) {
-        context.cacheDir.mkdirs()
-    }
-    
-    // Create the file if it doesn't exist
-    if (!file.exists()) {
-        file.createNewFile()
-    }
-
-    return FileProvider.getUriForFile(
-        context,
-        "${context.packageName}.fileprovider",
-        file
-    )
 }
 
 @Composable
