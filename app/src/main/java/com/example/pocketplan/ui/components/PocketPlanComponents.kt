@@ -273,6 +273,7 @@ fun GoalCard(
     dueDate: String,
     progressPercent: Int,
     status: String,
+    icon: ImageVector = Icons.Default.Flag,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -285,6 +286,16 @@ fun GoalCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = CircleShape,
+                color = BackgroundLight
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(imageVector = icon, contentDescription = null, tint = PrimaryBlue)
+                }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Surface(
                     shape = RoundedCornerShape(4.dp),
