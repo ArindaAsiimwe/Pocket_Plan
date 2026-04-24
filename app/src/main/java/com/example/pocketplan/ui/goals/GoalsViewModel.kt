@@ -30,8 +30,8 @@ class GoalsViewModel @Inject constructor() : ViewModel() {
         _uiState.update {
             it.copy(
                 goals = listOf(
-                    Goal(UUID.randomUUID().toString(), "user1", "Rent", 500000.0, System.currentTimeMillis() + 86400000 * 30, "Protected"),
-                    Goal(UUID.randomUUID().toString(), "user1", "Tuition", 1500000.0, System.currentTimeMillis() + 86400000 * 60, "In Progress")
+                    Goal(UUID.randomUUID().toString(), "user1", "Rent", 500000.0, System.currentTimeMillis() + 86400000 * 30, "COMPLETED"),
+                    Goal(UUID.randomUUID().toString(), "user1", "Tuition", 1500000.0, System.currentTimeMillis() + 86400000 * 60, "IN_PROGRESS")
                 ),
                 portfolioHealthPercent = 65
             )
@@ -50,6 +50,30 @@ class GoalsViewModel @Inject constructor() : ViewModel() {
         _uiState.update { it.copy(attachedImageUri = uri) }
     }
 
+    fun updateGoalStatus(goalId: String, newStatus: String) {
+        _uiState.update { state ->
+            state.copy(
+                goals = state.goals.map {
+                    if (it.id == goalId) it.copy(status = newStatus) else it
+                }
+            )
+        }
+    }
+
+    fun updateGoalImage(goalId: String, uri: Uri?) {
+        _uiState.update { state ->
+            state.copy(
+                goals = state.goals.map {
+                    if (it.id == goalId) it.copy(attachedImageUri = uri?.toString()) else it
+                }
+            )
+        }
+    }
+
+    fun deleteGoalImage(goalId: String) {
+        updateGoalImage(goalId, null)
+    }
+
     fun saveGoal(name: String, amount: Double, dueDate: Long) {
         val newGoal = Goal(
             id = UUID.randomUUID().toString(),
@@ -57,7 +81,8 @@ class GoalsViewModel @Inject constructor() : ViewModel() {
             name = name,
             targetAmount = amount,
             dueDate = dueDate,
-            status = "In Progress"
+            status = "PENDING",
+            attachedImageUri = _uiState.value.attachedImageUri?.toString()
         )
         _uiState.update {
             it.copy(

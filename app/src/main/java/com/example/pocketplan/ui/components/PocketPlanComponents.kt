@@ -1,5 +1,6 @@
 package com.example.pocketplan.ui.components
 
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
@@ -17,8 +18,8 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,10 +28,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.pocketplan.data.model.Category
 import com.example.pocketplan.data.model.CategoryStatus
 import com.example.pocketplan.ui.budget.BudgetSummary
@@ -180,83 +184,182 @@ fun MonthChip(
 }
 
 /**
- * 4. CategoryAllocationCard
- * Shows category allocation with a progress bar.
+ * 4. PocketPlanCard
+ * A reusable unified card structure for Goals and Budget categories.
  */
 @Composable
-fun CategoryAllocationCard(
+fun PocketPlanCard(
+    title: String,
+    amount: Long,
+    subtitle: String? = null,
+    progressPercent: Int,
+    status: String,
+    onStatusChange: (String) -> Unit,
     icon: ImageVector,
-    categoryName: String,
-    allocatedAmount: Long,
-    percentage: Int,
-    onPercentageChange: ((Int) -> Unit)? = null,
-    onClick: (() -> Unit)? = null,
+    onAmountEdit: (() -> Unit)? = null,
+    onProgressChange: ((Int) -> Unit)? = null,
+    showStatusSelector: Boolean = true,
+    bottomContent: @Composable ColumnScope.() -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val statusColor = when (status) {
+        "PENDING", "Pending" -> Color.Gray
+        "IN_PROGRESS", "In Progress" -> SecondaryBlue
+        "COMPLETED", "Completed" -> SuccessGreen
+        else -> SecondaryBlue
+    }
+
+    val badgeText = when(status) {
+        "PENDING" -> "Pending"
+        "IN_PROGRESS" -> "In Progress"
+        "COMPLETED" -> "Completed"
+        else -> status.replace("_", " ")
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
+            .then(if (onAmountEdit != null) Modifier.clickable { onAmountEdit() } else Modifier),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically) {
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = BackgroundLight,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(48.dp),
+                    shape = CircleShape,
+                    color = BackgroundLight
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(imageVector = icon, contentDescription = null, tint = PrimaryBlue)
                     }
                 }
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = BackgroundLight
-                ) {
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Surface(
+                        shape = RoundedCornerShape(4.dp),
+                        color = statusColor.copy(alpha = 0.1f)
+                    ) {
+                        Text(
+                            text = badgeText,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = statusColor,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(text = title, style = MaterialTheme.typography.titleLarge)
                     Text(
-                        text = "$percentage%",
+                        text = "UGX %,d".format(amount),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    if (subtitle != null) {
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                }
+                
+                // Right side Progress Indicator (Circular)
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(60.dp)) {
+                    Canvas(modifier = Modifier.size(60.dp)) {
+                        drawArc(
+                            color = ChipUnselected,
+                            startAngle = 0f,
+                            sweepAngle = 360f,
+                            useCenter = false,
+                            style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round)
+                        )
+                        drawArc(
+                            color = statusColor,
+                            startAngle = -90f,
+                            sweepAngle = (progressPercent / 100f) * 360f,
+                            useCenter = false,
+                            style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round)
+                        )
+                    }
+                    Text(
+                        text = "$progressPercent%",
                         style = MaterialTheme.typography.labelSmall,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        color = TextPrimary
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(text = categoryName, style = MaterialTheme.typography.titleLarge)
-            Text(
-                text = "UGX %,d".format(allocatedAmount),
-                style = MaterialTheme.typography.bodySmall,
-                color = TextSecondary
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-            if (onPercentageChange != null) {
-                Slider(
-                    value = percentage.toFloat(),
-                    onValueChange = { onPercentageChange(it.toInt()) },
-                    valueRange = 0f..100f,
-                    colors = SliderDefaults.colors(
-                        thumbColor = PrimaryBlue,
-                        activeTrackColor = SecondaryBlue,
-                        inactiveTrackColor = ChipUnselected
+
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp)
+            ) {
+                if (onProgressChange != null) {
+                    Slider(
+                        value = progressPercent.toFloat(),
+                        onValueChange = { onProgressChange(it.toInt()) },
+                        valueRange = 0f..100f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = PrimaryBlue,
+                            activeTrackColor = SecondaryBlue,
+                            inactiveTrackColor = ChipUnselected
+                        )
                     )
-                )
-            } else {
-                LinearProgressIndicator(
-                    progress = { percentage / 100f },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(6.dp)
-                        .clip(CircleShape),
-                    color = SecondaryBlue,
-                    trackColor = ChipUnselected,
-                    strokeCap = StrokeCap.Round
-                )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                if (showStatusSelector) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    
+                    Text(
+                        text = "Update Status",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextSecondary
+                    )
+                    
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("PENDING", "IN_PROGRESS", "COMPLETED").forEach { s ->
+                            val isSelected = (s == status || s == status.uppercase())
+                            val displayText = when(s) {
+                                "PENDING" -> "Pending"
+                                "IN_PROGRESS" -> "In Progress"
+                                "COMPLETED" -> "Completed"
+                                else -> s
+                            }
+                            val chipStatusColor = when (s) {
+                                "PENDING" -> Color.Gray
+                                "IN_PROGRESS" -> SecondaryBlue
+                                "COMPLETED" -> SuccessGreen
+                                else -> SecondaryBlue
+                            }
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { onStatusChange(s) },
+                                label = { 
+                                    Text(
+                                        text = displayText,
+                                        style = MaterialTheme.typography.labelSmall
+                                    ) 
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = chipStatusColor.copy(alpha = 0.2f),
+                                    selectedLabelColor = chipStatusColor
+                                )
+                            )
+                        }
+                    }
+                }
+                
+                bottomContent()
             }
         }
     }
@@ -264,88 +367,75 @@ fun CategoryAllocationCard(
 
 /**
  * 5. GoalCard
- * Visualizes a goal with a status badge and circular progress.
+ * Visualizes a goal using the unified PocketPlanCard.
  */
 @Composable
 fun GoalCard(
+    goalId: String,
     goalName: String,
     targetAmount: Long,
     dueDate: String,
     progressPercent: Int,
     status: String,
+    attachedImageUri: String? = null,
+    onStatusChange: (String) -> Unit = {},
+    onImagePickWithUri: (Uri) -> Unit = {},
+    onImageDelete: () -> Unit = {},
     icon: ImageVector = Icons.Default.Flag,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = CircleShape,
-                color = BackgroundLight
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(imageVector = icon, contentDescription = null, tint = PrimaryBlue)
+    PocketPlanCard(
+        title = goalName,
+        amount = targetAmount,
+        subtitle = "Due $dueDate",
+        progressPercent = progressPercent,
+        status = status,
+        onStatusChange = onStatusChange,
+        icon = icon,
+        bottomContent = {
+            Spacer(modifier = Modifier.height(8.dp))
+            val goalImageUri = attachedImageUri?.let { Uri.parse(it) }
+            PhotoAttachmentSection(
+                label = goalName,
+                attachedUri = goalImageUri,
+                onImageSelected = { uri ->
+                    if (uri == null) {
+                        onImageDelete()
+                    } else {
+                        onImagePickWithUri(uri)
+                    }
                 }
+            )
+        },
+        modifier = modifier
+    )
+}
+
+@Composable
+fun DeleteConfirmationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    title: String = "Delete Proof",
+    message: String = "Are you sure you want to delete this proof image?"
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Text(message) },
+        confirmButton = {
+            TextButton(onClick = {
+                onConfirm()
+                onDismiss()
+            }) {
+                Text("Delete", color = Color.Red)
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = if (status == "PROTECTED") SuccessGreen.copy(alpha = 0.1f) else SecondaryBlue.copy(alpha = 0.1f)
-                ) {
-                    Text(
-                        text = status,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = if (status == "PROTECTED") SuccessGreen else SecondaryBlue,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = goalName, style = MaterialTheme.typography.titleLarge)
-                Text(
-                    text = "UGX %,d".format(targetAmount),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Due $dueDate",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary
-                )
-            }
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(60.dp)) {
-                Canvas(modifier = Modifier.size(60.dp)) {
-                    drawArc(
-                        color = ChipUnselected,
-                        startAngle = 0f,
-                        sweepAngle = 360f,
-                        useCenter = false,
-                        style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round)
-                    )
-                    drawArc(
-                        color = if (status == "PROTECTED") SuccessGreen else SecondaryBlue,
-                        startAngle = -90f,
-                        sweepAngle = (progressPercent / 100f) * 360f,
-                        useCenter = false,
-                        style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round)
-                    )
-                }
-                Text(
-                    text = "$progressPercent%",
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold
-                )
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
             }
         }
-    }
+    )
 }
 
 /**
@@ -681,17 +771,17 @@ fun StatusChip(status: CategoryStatus, onClick: () -> Unit) {
     }
 }
 
-/**
+/**l
  * 12. PocketPlanBottomBar
  * Reusable bottom navigation bar that is docked to the bottom of the screen.
  */
 @Composable
 fun PocketPlanBottomBar(navController: NavHostController) {
     val items = listOf(
-        NavigationItem("Budgets", Screen.SemesterBudgets.route, Icons.Default.AccountBalance),
-        NavigationItem("Tracking", Screen.Tracking.route, Icons.AutoMirrored.Filled.ReceiptLong),
-        NavigationItem("Goals", Screen.Goals.route, Icons.Default.Flag),
-        NavigationItem("Insights", Screen.Insights.route, Icons.Default.BarChart)
+        PocketNavItem("Budgets", Screen.SemesterBudgets.route, Icons.Default.AccountBalance),
+        PocketNavItem("Tracking", Screen.Tracking.route, Icons.AutoMirrored.Filled.ReceiptLong),
+        PocketNavItem("Goals", Screen.Goals.route, Icons.Default.Flag),
+        PocketNavItem("Insights", Screen.Insights.route, Icons.Default.BarChart)
     )
 
     Surface(
@@ -752,7 +842,7 @@ fun PocketPlanBottomBar(navController: NavHostController) {
     }
 }
 
-private data class NavigationItem(
+private data class PocketNavItem(
     val title: String,
     val route: String,
     val icon: ImageVector
