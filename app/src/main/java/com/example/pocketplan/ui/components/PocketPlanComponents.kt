@@ -384,7 +384,7 @@ fun ExpenseListItem(
             }
         }
         Text(
-            text = "-UGX %,d".format(amount),
+            text = "-UGX %,.0f".format(amount),
             style = MaterialTheme.typography.bodyLarge,
             color = ErrorRed,
             fontWeight = FontWeight.Bold
