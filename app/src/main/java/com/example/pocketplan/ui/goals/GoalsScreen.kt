@@ -84,7 +84,7 @@ fun GoalsScreen(
                     goalName = goal.name,
                     targetAmount = goal.targetAmount.toLong(),
                     dueDate = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(goal.dueDate)),
-                    progressPercent = if (goal.status == "COMPLETED") 100 else if (goal.status == "IN_PROGRESS") 45 else 0,
+                    progressPercent = if (goal.status == "COMPLETED") 100.0 else if (goal.status == "IN_PROGRESS") 45.0 else 0.0,
                     status = goal.status,
                     attachedImageUri = goal.attachedImageUri,
                     onStatusChange = { newStatus ->

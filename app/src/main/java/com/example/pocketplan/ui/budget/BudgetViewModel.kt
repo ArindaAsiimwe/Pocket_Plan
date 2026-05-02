@@ -2,48 +2,80 @@ package com.example.pocketplan.ui.budget
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.pocketplan.data.model.Budget
 import com.example.pocketplan.data.model.Category
 import com.example.pocketplan.data.model.CategoryStatus
+import com.example.pocketplan.data.repository.BudgetRepository
+import com.example.pocketplan.utils.ImageStorageHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
-import java.util.UUID
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class BudgetUiState(
-    val id: String = "",
+    val id: Long = 0L,
     val semesterName: String = "",
-    val totalFunds: Long = 2_500_000L,
-    val selectedMonths: List<String> = listOf("Jan", "Feb", "Mar", "Apr", "May"),
-    val categories: List<Category> = listOf(
-        Category("1", "Rent", 800_000, 32, "home"),
-        Category("2", "Tuition", 1_000_000, 40, "school")
-    ),
+    val totalFunds: Long = 0L,
+    val selectedMonths: List<String> = emptyList(),
+    val categories: List<Category> = emptyList(),
     val isEditing: Boolean = false,
     val attachedImageUri: Uri? = null,
-    val expandedAttachmentIds: Set<String> = emptySet()
+    val expandedAttachmentIds: Set<String> = emptySet(),
+    val createdDate: Long = 0L
 )
 
 @HiltViewModel
-class BudgetViewModel @Inject constructor() : ViewModel() {
+class BudgetViewModel @Inject constructor(
+    private val repository: BudgetRepository,
+    private val imageStorageHelper: ImageStorageHelper
+) : ViewModel() {
     private val _uiState = MutableStateFlow(BudgetUiState())
     val uiState: StateFlow<BudgetUiState> = _uiState.asStateFlow()
 
-    fun loadBudget(budgetId: String) {
-        // In a real app, fetch from repository. For now, just set the ID.
-        _uiState.update { it.copy(id = budgetId, semesterName = "Loading budget $budgetId...") }
+    private var budgetJob: Job? = null
+    private var categoriesJob: Job? = null
+
+    fun loadBudget(budgetId: Long) {
+        if (budgetId <= 0) return
+        
+        budgetJob?.cancel()
+        categoriesJob?.cancel()
+
+        budgetJob = viewModelScope.launch {
+            repository.getBudgetById(budgetId).collectLatest { budget ->
+                budget?.let { b ->
+                    _uiState.update { 
+                        it.copy(
+                            id = b.id,
+                            semesterName = b.semesterName,
+                            totalFunds = b.totalFunds,
+                            selectedMonths = b.selectedMonths,
+                            createdDate = b.createdDate
+                        )
+                    }
+                }
+            }
+        }
+
+        categoriesJob = viewModelScope.launch {
+            repository.getCategories(budgetId).collectLatest { categories ->
+                _uiState.update { it.copy(categories = categories) }
+            }
+        }
     }
 
     fun updateTotalFunds(amount: Long) {
-        if (!_uiState.value.isEditing) return
         _uiState.update { it.copy(totalFunds = amount) }
         recalculateCategoryAmounts()
     }
 
     fun toggleMonth(month: String) {
-        if (!_uiState.value.isEditing) return
         _uiState.update { state ->
             val newMonths = if (state.selectedMonths.contains(month)) {
                 state.selectedMonths.filter { it != month }
@@ -55,103 +87,89 @@ class BudgetViewModel @Inject constructor() : ViewModel() {
     }
 
     fun addCategory(name: String) {
-        if (!_uiState.value.isEditing) return
-        _uiState.update { state ->
+        viewModelScope.launch {
+            val currentState = _uiState.value
             val newCategory = Category(
-                id = UUID.randomUUID().toString(),
+                budgetId = currentState.id,
                 name = name,
                 allocatedAmount = 0L,
-                percentage = 0
+                percentage = 0.0
             )
-            state.copy(categories = state.categories + newCategory)
+            repository.insertCategory(newCategory)
         }
     }
 
-    fun removeCategory(categoryId: String) {
-        if (!_uiState.value.isEditing) return
-        _uiState.update { state ->
-            state.copy(categories = state.categories.filter { it.id != categoryId })
+    fun removeCategory(category: Category) {
+        viewModelScope.launch {
+            repository.deleteCategory(category)
         }
     }
 
-    fun updateCategoryPercentage(categoryId: String, percentage: Int) {
-        if (!_uiState.value.isEditing) return
-        _uiState.update { state ->
-            val updatedCategories = state.categories.map { category ->
-                if (category.id == categoryId) {
-                    category.copy(
-                        percentage = percentage,
-                        allocatedAmount = (state.totalFunds * percentage / 100.0).toLong()
-                    )
-                } else {
-                    category
-                }
-            }
-            state.copy(categories = updatedCategories)
+    fun updateCategoryPercentage(categoryId: Long, percentage: Double) {
+        val category = _uiState.value.categories.find { it.id == categoryId } ?: return
+        viewModelScope.launch {
+            val updatedCategory = category.copy(
+                percentage = percentage,
+                allocatedAmount = (_uiState.value.totalFunds * percentage / 100.0).toLong()
+            )
+            repository.updateCategory(updatedCategory)
         }
     }
 
-    fun updateCategoryAmount(categoryId: String, amount: Double) {
-        if (!_uiState.value.isEditing) return
-        _uiState.update { state ->
-            val updatedCategories = state.categories.map { category ->
-                if (category.id == categoryId) {
-                    val percentage = if (state.totalFunds > 0) ((amount / state.totalFunds) * 100.0).toInt() else 0
-                    category.copy(
-                        allocatedAmount = amount.toLong(),
-                        percentage = percentage
-                    )
-                } else {
-                    category
-                }
-            }
-            state.copy(categories = updatedCategories)
+    fun updateCategoryAmount(categoryId: Long, amount: Double) {
+        val category = _uiState.value.categories.find { it.id == categoryId } ?: return
+        viewModelScope.launch {
+            val totalFunds = _uiState.value.totalFunds
+            val percentage = if (totalFunds > 0) (amount / totalFunds) * 100.0 else 0.0
+            val updatedCategory = category.copy(
+                allocatedAmount = amount.toLong(),
+                percentage = percentage
+            )
+            repository.updateCategory(updatedCategory)
         }
     }
 
     private fun recalculateCategoryAmounts() {
-        _uiState.update { state ->
-            val updatedCategories = state.categories.map { category ->
-                category.copy(allocatedAmount = (state.totalFunds * category.percentage / 100.0).toLong())
+        val currentState = _uiState.value
+        currentState.categories.forEach { category ->
+            viewModelScope.launch {
+                val newAmount = (currentState.totalFunds * category.percentage / 100.0).toLong()
+                if (newAmount != category.allocatedAmount) {
+                    repository.updateCategory(category.copy(allocatedAmount = newAmount))
+                }
             }
-            state.copy(categories = updatedCategories)
         }
     }
 
-    fun toggleAttachmentSection(categoryId: String) {
+    fun toggleAttachmentSection(categoryId: Long) {
         _uiState.update { state ->
-            val newExpanded = if (state.expandedAttachmentIds.contains(categoryId)) {
-                state.expandedAttachmentIds - categoryId
+            val newExpanded = if (state.expandedAttachmentIds.contains(categoryId.toString())) {
+                state.expandedAttachmentIds - categoryId.toString()
             } else {
-                state.expandedAttachmentIds + categoryId
+                state.expandedAttachmentIds + categoryId.toString()
             }
             state.copy(expandedAttachmentIds = newExpanded)
         }
     }
 
-    fun updateCategoryPhoto(categoryId: String, uri: Uri?) {
-        _uiState.update { state ->
-            val updatedCategories = state.categories.map { category ->
-                if (category.id == categoryId) {
-                    category.copy(attachedImageUri = uri)
-                } else {
-                    category
-                }
+    fun updateCategoryPhoto(categoryId: Long, uri: Uri?) {
+        val category = _uiState.value.categories.find { it.id == categoryId } ?: return
+        viewModelScope.launch {
+            val savedPath = uri?.let { imageStorageHelper.saveImageToInternalStorage(it) }
+            
+            // Delete old image if it exists
+            category.attachedImageUri?.let { oldPath ->
+                imageStorageHelper.deleteImageFromInternalStorage(oldPath)
             }
-            state.copy(categories = updatedCategories)
+            
+            repository.updateCategory(category.copy(attachedImageUri = savedPath))
         }
     }
 
-    fun updateCategoryStatus(categoryId: String, status: CategoryStatus) {
-        _uiState.update { state ->
-            val updatedCategories = state.categories.map { category ->
-                if (category.id == categoryId) {
-                    category.copy(status = status)
-                } else {
-                    category
-                }
-            }
-            state.copy(categories = updatedCategories)
+    fun updateCategoryStatus(categoryId: Long, status: CategoryStatus) {
+        val category = _uiState.value.categories.find { it.id == categoryId } ?: return
+        viewModelScope.launch {
+            repository.updateCategory(category.copy(status = status))
         }
     }
 
@@ -160,7 +178,23 @@ class BudgetViewModel @Inject constructor() : ViewModel() {
     }
 
     fun saveBudget() {
-        // Mock save
-        _uiState.update { it.copy(isEditing = false) }
+        viewModelScope.launch {
+            val state = _uiState.value
+            val budget = Budget(
+                id = state.id,
+                semesterName = state.semesterName,
+                totalFunds = state.totalFunds,
+                selectedMonths = state.selectedMonths,
+                createdDate = if (state.createdDate == 0L) System.currentTimeMillis() else state.createdDate
+            )
+            if (state.id == 0L) {
+                val newId = repository.insertBudget(budget)
+                _uiState.update { it.copy(id = newId, isEditing = false) }
+                loadBudget(newId)
+            } else {
+                repository.updateBudget(budget)
+                _uiState.update { it.copy(isEditing = false) }
+            }
+        }
     }
 }

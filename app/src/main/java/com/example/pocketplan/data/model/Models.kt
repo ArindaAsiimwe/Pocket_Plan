@@ -1,9 +1,7 @@
 package com.example.pocketplan.data.model
 
-import android.net.Uri
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.TypeConverters
 
 @Entity(tableName = "users")
 data class User(
@@ -11,27 +9,6 @@ data class User(
     val name: String,
     val email: String,
     val passwordHash: String
-)
-
-@Entity(tableName = "budgets")
-data class Budget(
-    @PrimaryKey val id: String,
-    val userId: String,
-    val totalAmount: Double,
-    val months: List<String>,
-    val categories: List<Category>
-)
-
-enum class CategoryStatus { PENDING, IN_PROGRESS, COMPLETED }
-
-data class Category(
-    val id: String,
-    val name: String,
-    val allocatedAmount: Long,
-    val percentage: Int,
-    val icon: String = "default",
-    val status: CategoryStatus = CategoryStatus.PENDING,
-    val attachedImageUri: Uri? = null
 )
 
 @Entity(tableName = "goals")

@@ -3,11 +3,14 @@ package com.example.pocketplan.ui.goals
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import com.example.pocketplan.data.model.Goal
+import com.example.pocketplan.utils.ImageStorageHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import androidx.lifecycle.viewModelScope
 import java.util.UUID
 import javax.inject.Inject
 
@@ -21,7 +24,9 @@ data class GoalsUiState(
 )
 
 @HiltViewModel
-class GoalsViewModel @Inject constructor() : ViewModel() {
+class GoalsViewModel @Inject constructor(
+    private val imageStorageHelper: ImageStorageHelper
+) : ViewModel() {
     private val _uiState = MutableStateFlow(GoalsUiState())
     val uiState: StateFlow<GoalsUiState> = _uiState.asStateFlow()
 
@@ -47,7 +52,12 @@ class GoalsViewModel @Inject constructor() : ViewModel() {
     }
 
     fun onImagePicked(uri: Uri?) {
-        _uiState.update { it.copy(attachedImageUri = uri) }
+        viewModelScope.launch {
+            val savedPath = uri?.let { imageStorageHelper.saveImageToInternalStorage(it) }
+            // If there was an old temporary image, we might want to delete it, 
+            // but here it's for a new goal being drafted.
+            _uiState.update { it.copy(attachedImageUri = savedPath?.let { path -> Uri.parse(path) }) }
+        }
     }
 
     fun updateGoalStatus(goalId: String, newStatus: String) {
@@ -61,20 +71,40 @@ class GoalsViewModel @Inject constructor() : ViewModel() {
     }
 
     fun updateGoalImage(goalId: String, uri: Uri?) {
-        _uiState.update { state ->
-            state.copy(
-                goals = state.goals.map {
-                    if (it.id == goalId) it.copy(attachedImageUri = uri?.toString()) else it
+        viewModelScope.launch {
+            val savedPath = uri?.let { imageStorageHelper.saveImageToInternalStorage(it) }
+            
+            _uiState.update { state ->
+                val updatedGoals = state.goals.map { goal ->
+                    if (goal.id == goalId) {
+                        // Delete old image
+                        goal.attachedImageUri?.let { oldPath ->
+                            imageStorageHelper.deleteImageFromInternalStorage(oldPath)
+                        }
+                        goal.copy(attachedImageUri = savedPath)
+                    } else goal
                 }
-            )
+                state.copy(goals = updatedGoals)
+            }
         }
     }
 
     fun deleteGoalImage(goalId: String) {
-        updateGoalImage(goalId, null)
+        _uiState.update { state ->
+            val updatedGoals = state.goals.map { goal ->
+                if (goal.id == goalId) {
+                    goal.attachedImageUri?.let { oldPath ->
+                        imageStorageHelper.deleteImageFromInternalStorage(oldPath)
+                    }
+                    goal.copy(attachedImageUri = null)
+                } else goal
+            }
+            state.copy(goals = updatedGoals)
+        }
     }
 
     fun saveGoal(name: String, amount: Double, dueDate: Long) {
+        val attachedPath = _uiState.value.attachedImageUri?.toString()
         val newGoal = Goal(
             id = UUID.randomUUID().toString(),
             userId = "user1",
@@ -82,7 +112,7 @@ class GoalsViewModel @Inject constructor() : ViewModel() {
             targetAmount = amount,
             dueDate = dueDate,
             status = "PENDING",
-            attachedImageUri = _uiState.value.attachedImageUri?.toString()
+            attachedImageUri = attachedPath
         )
         _uiState.update {
             it.copy(

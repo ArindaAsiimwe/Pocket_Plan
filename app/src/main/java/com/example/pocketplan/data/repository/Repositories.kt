@@ -12,11 +12,6 @@ interface AuthRepository {
     fun getCurrentUser(): Flow<User?>
 }
 
-interface BudgetRepository {
-    fun getBudget(userId: String): Flow<Budget?>
-    suspend fun saveBudget(budget: Budget)
-}
-
 interface GoalRepository {
     fun getGoals(userId: String): Flow<List<Goal>>
     suspend fun addGoal(goal: Goal)
