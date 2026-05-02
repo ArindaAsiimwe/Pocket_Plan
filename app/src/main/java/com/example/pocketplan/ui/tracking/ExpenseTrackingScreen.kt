@@ -284,8 +284,7 @@ fun AddExpenseForm(
     viewModel: ExpenseTrackingViewModel,
     onSave: () -> Unit
 ) {
-
-    val categories = listOf("Food", "Transport", "Shopping", "Misc")
+    var showAddCategoryDialog by remember { mutableStateOf(false) }
 
     // Tap-to-open handling for the Date field.
     var showDatePicker by remember { mutableStateOf(false) }
@@ -325,12 +324,29 @@ fun AddExpenseForm(
             )
         )
 
-        // Category
-        Text(
-            "SELECT CATEGORY *",
-            style = MaterialTheme.typography.labelMedium,
-            color = if (state.categoryError != null) ErrorRed else TextSecondary
-        )
+        // Category Header with Add Button
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "SELECT CATEGORY *",
+                style = MaterialTheme.typography.labelMedium,
+                color = if (state.categoryError != null) ErrorRed else TextSecondary
+            )
+            IconButton(
+                onClick = { showAddCategoryDialog = true },
+                modifier = Modifier.size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add Custom Category",
+                    tint = PrimaryBlue,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -338,7 +354,7 @@ fun AddExpenseForm(
                 .fillMaxWidth()
                 .horizontalScroll(rememberScrollState())
         ) {
-            categories.forEach { category ->
+            state.categories.forEach { category ->
                 FilterChip(
                     selected = state.selectedCategory == category,
                     onClick = { viewModel.onCategorySelected(category) },
@@ -416,6 +432,16 @@ fun AddExpenseForm(
         PocketPlanButton(
             text = "Save Expense",
             onClick = onSave
+        )
+    }
+
+    if (showAddCategoryDialog) {
+        AddCategoryDialog(
+            onDismiss = { showAddCategoryDialog = false },
+            onConfirm = { newCategory ->
+                viewModel.addCategory(newCategory)
+                showAddCategoryDialog = false
+            }
         )
     }
 

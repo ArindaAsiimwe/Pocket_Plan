@@ -259,28 +259,11 @@ fun SetupView(
     }
 
     if (showAddCategoryDialog) {
-        var name by remember { mutableStateOf("") }
-        AlertDialog(
-            onDismissRequest = { showAddCategoryDialog = false },
-            title = { Text("Add New Category") },
-            text = {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Category Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    if (name.isNotBlank()) {
-                        viewModel.addCategory(name)
-                        showAddCategoryDialog = false
-                    }
-                }) { Text("Add") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showAddCategoryDialog = false }) { Text("Cancel") }
+        AddCategoryDialog(
+            onDismiss = { showAddCategoryDialog = false },
+            onConfirm = { name ->
+                viewModel.addCategory(name)
+                showAddCategoryDialog = false
             }
         )
     }

@@ -439,7 +439,51 @@ fun DeleteConfirmationDialog(
 }
 
 /**
- * 6. ExpenseListItem
+ * 6. AddCategoryDialog
+ * Reusable dialog for adding a new category.
+ */
+@Composable
+fun AddCategoryDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add New Category") },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Category Name") },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = PrimaryBlue,
+                    focusedLabelColor = PrimaryBlue,
+                    cursorColor = PrimaryBlue
+                )
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                if (name.isNotBlank()) {
+                    onConfirm(name)
+                }
+            }) {
+                Text("Add", color = PrimaryBlue, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = TextSecondary)
+            }
+        }
+    )
+}
+
+/**
+ * 7. ExpenseListItem
  * Single row item for expenses.
  */
 @Composable

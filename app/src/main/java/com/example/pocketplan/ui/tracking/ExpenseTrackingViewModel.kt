@@ -36,6 +36,7 @@ data class TrackingUiState(
     val pickedDateMillis: Long? = null,
     val receiptImageUri: Uri? = null,
     val recentExpenses: List<ExpenseDisplay> = emptyList(),
+    val categories: List<String> = listOf("Food", "Transport", "Shopping", "Misc"),
     // Per-field validation messages. Null means the field is currently valid.
     val amountError: String? = null,
     val categoryError: String? = null,
@@ -71,6 +72,16 @@ class ExpenseTrackingViewModel @Inject constructor(
 
     fun onCategorySelected(category: String) {
         _uiState.update { it.copy(selectedCategory = category, categoryError = null) }
+    }
+
+    fun addCategory(name: String) {
+        _uiState.update {
+            it.copy(
+                categories = it.categories + name,
+                selectedCategory = name,
+                categoryError = null
+            )
+        }
     }
 
     fun onNoteChange(note: String) {
