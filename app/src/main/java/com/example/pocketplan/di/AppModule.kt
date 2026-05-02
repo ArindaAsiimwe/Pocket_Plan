@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.example.pocketplan.data.local.AppDatabase
 import com.example.pocketplan.data.local.BudgetDao
+import com.example.pocketplan.data.local.CategoryDao
 import com.example.pocketplan.data.local.ExpenseDao
 import com.example.pocketplan.data.local.GoalDao
 import com.example.pocketplan.data.local.UserDao
@@ -25,7 +26,8 @@ object AppModule {
             context,
             AppDatabase::class.java,
             "pocket_plan_db"
-        ).build()
+        ).fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides
@@ -33,6 +35,9 @@ object AppModule {
 
     @Provides
     fun provideBudgetDao(db: AppDatabase): BudgetDao = db.budgetDao()
+
+    @Provides
+    fun provideCategoryDao(db: AppDatabase): CategoryDao = db.categoryDao()
 
     @Provides
     fun provideGoalDao(db: AppDatabase): GoalDao = db.goalDao()

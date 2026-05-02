@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.pocketplan.data.model.Category
 import com.example.pocketplan.data.model.CategoryStatus
+import com.example.pocketplan.ui.budget.AllocationStatus
 import com.example.pocketplan.ui.budget.BudgetSummary
 import com.example.pocketplan.ui.theme.*
 import com.example.pocketplan.utils.CurrencyUtils
@@ -192,12 +193,12 @@ fun PocketPlanCard(
     title: String,
     amount: Long,
     subtitle: String? = null,
-    progressPercent: Int,
+    progressPercent: Double,
     status: String,
     onStatusChange: (String) -> Unit,
     icon: ImageVector,
     onAmountEdit: (() -> Unit)? = null,
-    onProgressChange: ((Int) -> Unit)? = null,
+    onProgressChange: ((Double) -> Unit)? = null,
     showStatusSelector: Boolean = true,
     bottomContent: @Composable ColumnScope.() -> Unit = {},
     modifier: Modifier = Modifier
@@ -280,13 +281,13 @@ fun PocketPlanCard(
                         drawArc(
                             color = statusColor,
                             startAngle = -90f,
-                            sweepAngle = (progressPercent / 100f) * 360f,
+                            sweepAngle = (progressPercent.toFloat() / 100f) * 360f,
                             useCenter = false,
                             style = Stroke(width = 6.dp.toPx(), cap = StrokeCap.Round)
                         )
                     }
                     Text(
-                        text = "$progressPercent%",
+                        text = "%.0f%%".format(progressPercent),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -301,7 +302,7 @@ fun PocketPlanCard(
                 if (onProgressChange != null) {
                     Slider(
                         value = progressPercent.toFloat(),
-                        onValueChange = { onProgressChange(it.toInt()) },
+                        onValueChange = { onProgressChange(it.toDouble()) },
                         valueRange = 0f..100f,
                         colors = SliderDefaults.colors(
                             thumbColor = PrimaryBlue,
@@ -375,7 +376,7 @@ fun GoalCard(
     goalName: String,
     targetAmount: Long,
     dueDate: String,
-    progressPercent: Int,
+    progressPercent: Double,
     status: String,
     attachedImageUri: String? = null,
     onStatusChange: (String) -> Unit = {},
@@ -604,7 +605,7 @@ fun BudgetSummaryCard(
     isExpanded: Boolean,
     onToggleExpand: () -> Unit,
     onNavigate: () -> Unit,
-    onStatusChange: (categoryId: String, newStatus: CategoryStatus) -> Unit
+    onStatusChange: (categoryId: Long, newStatus: CategoryStatus) -> Unit
 ) {
     val rotationState by animateFloatAsState(
         targetValue = if (isExpanded) 90f else 0f, label = "rotation"
@@ -641,12 +642,17 @@ fun BudgetSummaryCard(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        val (statusText, statusColor) = when (summary.allocationStatus) {
+                            AllocationStatus.FULLY_ALLOCATED -> "✓ Fully Allocated" to SuccessGreen
+                            AllocationStatus.PARTIALLY_ALLOCATED -> "Partially Allocated" to WarningOrange
+                            AllocationStatus.NOT_ALLOCATED -> "Not Allocated" to Color.Gray
+                        }
                         Surface(
-                            color = if (summary.isFullyAllocated) SuccessGreen else WarningOrange,
+                            color = statusColor,
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(
-                                text = if (summary.isFullyAllocated) "✓ Fully Allocated" else "Incomplete",
+                                text = statusText,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = Color.White

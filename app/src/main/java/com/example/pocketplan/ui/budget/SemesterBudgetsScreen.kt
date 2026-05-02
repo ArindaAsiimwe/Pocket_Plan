@@ -26,8 +26,8 @@ import com.example.pocketplan.ui.theme.TextSecondary
 @Composable
 fun SemesterBudgetsScreen(
     viewModel: SemesterBudgetsViewModel,
-    onBudgetClick: (budgetId: String) -> Unit,
-    onCreateConfirmed: (budgetId: String) -> Unit
+    onBudgetClick: (budgetId: Long) -> Unit,
+    onCreateConfirmed: (budgetId: Long) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -83,8 +83,9 @@ fun SemesterBudgetsScreen(
                 onYearChange = { viewModel.onYearChange(it) },
                 onDismiss = { viewModel.dismissCreateModal() },
                 onConfirm = {
-                    val newId = viewModel.createBudget()
-                    onCreateConfirmed(newId)
+                    viewModel.createBudget { newId ->
+                        onCreateConfirmed(newId)
+                    }
                 }
             )
         }
