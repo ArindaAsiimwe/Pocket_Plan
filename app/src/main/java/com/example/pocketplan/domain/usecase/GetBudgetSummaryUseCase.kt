@@ -9,6 +9,6 @@ class GetBudgetSummaryUseCase @Inject constructor(
     private val budgetRepository: BudgetRepository
 ) {
     operator fun invoke(userId: String): Flow<Budget?> {
-        return budgetRepository.getBudget(userId)
+        return budgetRepository.getCurrentBudget(userId)
     }
 }

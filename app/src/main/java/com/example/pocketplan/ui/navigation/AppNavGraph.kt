@@ -80,7 +80,7 @@ fun AppNavGraph(
         }
         composable(Screen.BudgetSetup.route) { backStackEntry ->
             val viewModel: BudgetViewModel = hiltViewModel()
-            val budgetId = backStackEntry.arguments?.getString("budgetId") ?: "new"
+            val budgetId = backStackEntry.arguments?.getString("budgetId")?.toLongOrNull() ?: 0L
             
             LaunchedEffect(budgetId) {
                 viewModel.loadBudget(budgetId)

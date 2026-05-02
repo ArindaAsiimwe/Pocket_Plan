@@ -5,7 +5,7 @@ sealed class Screen(val route: String) {
     object Register : Screen("register")
     object SemesterBudgets : Screen("semester_budgets")
     object BudgetSetup : Screen("budget_setup/{budgetId}") {
-        fun createRoute(budgetId: String) = "budget_setup/$budgetId"
+        fun createRoute(budgetId: Any) = "budget_setup/$budgetId"
     }
     object Goals : Screen("goals")
     object Tracking : Screen("tracking")

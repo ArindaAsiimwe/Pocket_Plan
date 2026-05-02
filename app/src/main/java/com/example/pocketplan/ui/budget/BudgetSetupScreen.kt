@@ -101,7 +101,10 @@ fun SetupView(
     var showEditCategoryAmountDialog by remember { mutableStateOf(false) }
     var selectedCategoryForEdit by remember { mutableStateOf<com.example.pocketplan.data.model.Category?>(null) }
 
-    val totalAllocation = uiState.categories.sumOf { it.percentage.toInt() }
+    val totalAllocatedAmount = uiState.categories.sumOf { it.allocatedAmount }
+    val isFullyAllocated = totalAllocatedAmount == uiState.totalFunds && uiState.totalFunds > 0
+    val isPartiallyAllocated = totalAllocatedAmount > 0 && totalAllocatedAmount < uiState.totalFunds
+    val totalPercentage = uiState.categories.sumOf { it.percentage }
 
     LazyColumn(
         modifier = Modifier
@@ -183,7 +186,7 @@ fun SetupView(
                 bottomContent = {
                     PhotoAttachmentSection(
                         label = category.name,
-                        attachedUri = category.attachedImageUri,
+                        attachedUri = category.attachedImageUri?.let { Uri.parse(it) },
                         onImageSelected = { uri ->
                             viewModel.updateCategoryPhoto(category.id, uri)
                         }
@@ -220,7 +223,7 @@ fun SetupView(
                 
                 Button(
                     onClick = onSave,
-                    enabled = totalAllocation == 100 && uiState.selectedMonths.isNotEmpty(),
+                    enabled = uiState.selectedMonths.isNotEmpty(),
                     modifier = Modifier.weight(1.5f),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
@@ -299,7 +302,8 @@ fun SetupView(
 
 @Composable
 fun MonthlyOutlookContent(uiState: BudgetUiState) {
-    val totalAllocation = uiState.categories.sumOf { it.percentage }
+    val totalPercentage = uiState.categories.sumOf { it.percentage }
+    val totalAllocated = uiState.categories.sumOf { it.allocatedAmount }
     val avgMonthly = if (uiState.selectedMonths.isNotEmpty()) {
         uiState.totalFunds / uiState.selectedMonths.size
     } else 0L
@@ -351,7 +355,7 @@ fun MonthlyOutlookContent(uiState: BudgetUiState) {
                     drawArc(
                         color = AccentTeal,
                         startAngle = 140f,
-                        sweepAngle = (totalAllocation / 100f) * 260f,
+                        sweepAngle = (totalPercentage.toFloat() / 100f) * 260f,
                         useCenter = false,
                         style = Stroke(width = 24.dp.toPx(), cap = StrokeCap.Round)
                     )
@@ -361,7 +365,7 @@ fun MonthlyOutlookContent(uiState: BudgetUiState) {
                     drawArc(
                         color = PrimaryBlue,
                         startAngle = 140f,
-                        sweepAngle = (essentialsPercent / 100f) * 260f,
+                        sweepAngle = (essentialsPercent.toFloat() / 100f) * 260f,
                         useCenter = false,
                         style = Stroke(width = 24.dp.toPx(), cap = StrokeCap.Round)
                     )
@@ -375,7 +379,7 @@ fun MonthlyOutlookContent(uiState: BudgetUiState) {
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "$totalAllocation%",
+                        text = "${totalPercentage.toInt()}%",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = PrimaryBlue
