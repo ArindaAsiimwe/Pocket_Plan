@@ -11,17 +11,6 @@ data class User(
     val passwordHash: String
 )
 
-@Entity(tableName = "goals")
-data class Goal(
-    @PrimaryKey val id: String,
-    val userId: String,
-    val name: String,
-    val targetAmount: Double,
-    val dueDate: Long,
-    val status: String, // "PENDING", "IN_PROGRESS", "COMPLETED"
-    val attachedImageUri: String? = null
-)
-
 @Entity(tableName = "expenses")
 data class Expense(
     @PrimaryKey val id: String,

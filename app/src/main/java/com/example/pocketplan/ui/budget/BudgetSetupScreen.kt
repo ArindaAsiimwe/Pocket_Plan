@@ -182,7 +182,9 @@ fun SetupView(
                 onProgressChange = if (uiState.isEditing) { percentage ->
                     viewModel.updateCategoryPercentage(category.id, percentage)
                 } else null,
-                showStatusSelector = uiState.isEditing,
+                showStatusSelector = true,
+                isExpanded = uiState.expandedAttachmentIds.contains(category.id.toString()),
+                onToggleExpand = { viewModel.toggleAttachmentSection(category.id) },
                 bottomContent = {
                     PhotoAttachmentSection(
                         label = category.name,

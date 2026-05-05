@@ -1,6 +1,7 @@
 package com.example.pocketplan.data.local
 
 import androidx.room.TypeConverter
+import com.example.pocketplan.data.model.GoalStatus
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.util.Date
@@ -27,5 +28,15 @@ class Converters {
     @TypeConverter
     fun dateToTimestamp(date: Date?): Long? {
         return date?.time
+    }
+
+    @TypeConverter
+    fun fromGoalStatus(status: GoalStatus): String {
+        return status.name
+    }
+
+    @TypeConverter
+    fun toGoalStatus(status: String): GoalStatus {
+        return GoalStatus.valueOf(status)
     }
 }

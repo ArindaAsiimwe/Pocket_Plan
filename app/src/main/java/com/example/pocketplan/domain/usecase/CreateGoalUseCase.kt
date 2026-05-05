@@ -8,6 +8,6 @@ class CreateGoalUseCase @Inject constructor(
     private val goalRepository: GoalRepository
 ) {
     suspend operator fun invoke(goal: Goal) {
-        goalRepository.addGoal(goal)
+        goalRepository.insertGoal(goal)
     }
 }
