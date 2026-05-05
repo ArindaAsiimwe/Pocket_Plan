@@ -27,7 +27,8 @@ import com.example.pocketplan.ui.theme.TextSecondary
 fun SemesterBudgetsScreen(
     viewModel: SemesterBudgetsViewModel,
     onBudgetClick: (budgetId: Long) -> Unit,
-    onCreateConfirmed: (budgetId: Long) -> Unit
+    onCreateConfirmed: (budgetId: Long) -> Unit,
+    onLogoutClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -35,7 +36,8 @@ fun SemesterBudgetsScreen(
         topBar = {
             PocketPlanTopBar(
                 title = "Semester Budgets",
-                onNotificationClick = { /* Handle notifications */ }
+                onNotificationClick = { /* Handle notifications */ },
+                onLogoutClick = onLogoutClick
             )
         },
         containerColor = BackgroundLight,

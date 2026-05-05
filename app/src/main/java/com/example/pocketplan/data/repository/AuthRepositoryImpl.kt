@@ -1,31 +1,62 @@
 package com.example.pocketplan.data.repository
 
+import com.example.pocketplan.data.local.SessionManager
 import com.example.pocketplan.data.local.UserDao
 import com.example.pocketplan.data.model.User
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class AuthRepositoryImpl @Inject constructor(
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val sessionManager: SessionManager
 ) : AuthRepository {
+    
+    private val _currentUser = MutableStateFlow<User?>(null)
+
     override suspend fun login(email: String, passwordHash: String): Result<User> {
         val user = userDao.getUserByEmail(email)
         return if (user != null && user.passwordHash == passwordHash) {
+            sessionManager.saveUserId(user.id)
+            _currentUser.value = user
             Result.success(user)
         } else {
-            Result.failure(Exception("Invalid credentials"))
+            Result.failure(Exception("Invalid email or password"))
         }
     }
 
     override suspend fun register(name: String, email: String, passwordHash: String): Result<User> {
-        val user = User(id = java.util.UUID.randomUUID().toString(), name = name, email = email, passwordHash = passwordHash)
+        val existingUser = userDao.getUserByEmail(email)
+        if (existingUser != null) {
+            return Result.failure(Exception("Email already registered"))
+        }
+        
+        val user = User(
+            id = java.util.UUID.randomUUID().toString(), 
+            name = name, 
+            email = email, 
+            passwordHash = passwordHash
+        )
         userDao.insertUser(user)
+        sessionManager.saveUserId(user.id)
+        _currentUser.value = user
         return Result.success(user)
     }
 
-    override fun getCurrentUser(): Flow<User?> = flow {
-        // Placeholder for session management
-        emit(null)
+    override fun getCurrentUser(): Flow<User?> = _currentUser.asStateFlow()
+
+    override suspend fun restoreSession(): User? {
+        val userId = sessionManager.getUserId() ?: return null
+        val user = userDao.getUserById(userId)
+        _currentUser.value = user
+        return user
+    }
+
+    override suspend fun logout() {
+        sessionManager.clearSession()
+        _currentUser.value = null
     }
 }

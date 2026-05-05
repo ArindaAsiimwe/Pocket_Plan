@@ -24,6 +24,7 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var localError by remember { mutableStateOf<String?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -62,9 +63,18 @@ fun RegisterScreen(
                 ) {
                     Spacer(modifier = Modifier.height(16.dp))
                     
+                    val displayError = localError ?: state.error
+                    if (displayError != null) {
+                        Text(
+                            text = displayError,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                    }
+
                     OutlinedTextField(
                         value = name,
-                        onValueChange = { name = it },
+                        onValueChange = { name = it; localError = null },
                         label = { Text("Full Name") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
@@ -78,7 +88,7 @@ fun RegisterScreen(
 
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { email = it },
+                        onValueChange = { email = it; localError = null },
                         label = { Text("Email Address") },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
@@ -92,7 +102,7 @@ fun RegisterScreen(
 
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = { password = it; localError = null },
                         label = { Text("Password") },
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
@@ -107,7 +117,7 @@ fun RegisterScreen(
 
                     OutlinedTextField(
                         value = confirmPassword,
-                        onValueChange = { confirmPassword = it },
+                        onValueChange = { confirmPassword = it; localError = null },
                         label = { Text("Confirm Password") },
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
@@ -121,7 +131,13 @@ fun RegisterScreen(
                     Spacer(modifier = Modifier.height(32.dp))
 
                     Button(
-                        onClick = { onRegisterClick(name, email, password) },
+                        onClick = { 
+                            if (password != confirmPassword) {
+                                localError = "Passwords do not match"
+                            } else {
+                                onRegisterClick(name, email, password) 
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),

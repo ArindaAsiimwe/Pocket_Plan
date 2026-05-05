@@ -60,6 +60,14 @@ fun LoginScreen(
                 ) {
                     Spacer(modifier = Modifier.height(24.dp))
                     
+                    if (state.error != null) {
+                        Text(
+                            text = state.error,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                    }
+
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },

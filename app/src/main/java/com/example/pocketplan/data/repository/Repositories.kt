@@ -10,6 +10,8 @@ interface AuthRepository {
     suspend fun login(email: String, passwordHash: String): Result<User>
     suspend fun register(name: String, email: String, passwordHash: String): Result<User>
     fun getCurrentUser(): Flow<User?>
+    suspend fun restoreSession(): User?
+    suspend fun logout()
 }
 
 interface GoalRepository {

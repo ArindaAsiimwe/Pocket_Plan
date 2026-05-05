@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -54,7 +55,8 @@ import com.example.pocketplan.ui.navigation.Screen
 @Composable
 fun PocketPlanTopBar(
     title: String,
-    onNotificationClick: () -> Unit
+    onNotificationClick: () -> Unit,
+    onLogoutClick: (() -> Unit)? = null
 ) {
     TopAppBar(
         title = {
@@ -81,6 +83,15 @@ fun PocketPlanTopBar(
                     contentDescription = "Notifications",
                     tint = TextOnDark
                 )
+            }
+            if (onLogoutClick != null) {
+                IconButton(onClick = onLogoutClick) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = "Logout",
+                        tint = TextOnDark
+                    )
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(

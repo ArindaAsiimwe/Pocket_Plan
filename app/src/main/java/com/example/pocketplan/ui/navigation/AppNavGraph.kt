@@ -1,9 +1,13 @@
 package com.example.pocketplan.ui.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -19,6 +23,7 @@ import com.example.pocketplan.ui.budget.SemesterBudgetsViewModel
 import com.example.pocketplan.ui.goals.GoalsScreen
 import com.example.pocketplan.ui.tracking.ExpenseTrackingScreen
 import com.example.pocketplan.ui.insights.InsightsScreen
+import com.example.pocketplan.ui.theme.PrimaryBlue
 
 @Composable
 fun AppNavGraph(
@@ -42,11 +47,18 @@ fun AppNavGraph(
                 }
             }
 
-            LoginScreen(
-                state = state,
-                onLoginClick = { email, pass -> viewModel.login(email, pass) },
-                onRegisterClick = { navController.navigate(Screen.Register.route) }
-            )
+            if (!state.isSessionChecked) {
+                // Splash / Initial Loading state
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = PrimaryBlue)
+                }
+            } else {
+                LoginScreen(
+                    state = state,
+                    onLoginClick = { email, pass -> viewModel.login(email, pass) },
+                    onRegisterClick = { navController.navigate(Screen.Register.route) }
+                )
+            }
         }
         composable(Screen.Register.route) {
             val viewModel: AuthViewModel = hiltViewModel()
@@ -67,14 +79,22 @@ fun AppNavGraph(
             )
         }
         composable(Screen.SemesterBudgets.route) {
-            val viewModel: SemesterBudgetsViewModel = hiltViewModel()
+            val budgetViewModel: SemesterBudgetsViewModel = hiltViewModel()
+            val authViewModel: AuthViewModel = hiltViewModel()
+            
             SemesterBudgetsScreen(
-                viewModel = viewModel,
+                viewModel = budgetViewModel,
                 onBudgetClick = { budgetId ->
                     navController.navigate(Screen.BudgetSetup.createRoute(budgetId))
                 },
                 onCreateConfirmed = { budgetId ->
                     navController.navigate(Screen.BudgetSetup.createRoute(budgetId))
+                },
+                onLogoutClick = {
+                    authViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }
