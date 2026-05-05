@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.pocketplan.data.model.GoalStatus
 import com.example.pocketplan.ui.components.GoalCard
 import com.example.pocketplan.ui.components.PocketPlanButton
 import com.example.pocketplan.ui.components.PocketPlanTopBar
@@ -84,9 +85,11 @@ fun GoalsScreen(
                     goalName = goal.name,
                     targetAmount = goal.targetAmount.toLong(),
                     dueDate = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(goal.dueDate)),
-                    progressPercent = if (goal.status == "COMPLETED") 100.0 else if (goal.status == "IN_PROGRESS") 45.0 else 0.0,
-                    status = goal.status,
-                    attachedImageUri = goal.attachedImageUri,
+                    progressPercent = if (goal.status == GoalStatus.COMPLETED) 100.0 else if (goal.status == GoalStatus.IN_PROGRESS) 45.0 else 0.0,
+                    status = goal.status.name,
+                    attachedImageUri = goal.imagePath,
+                    isExpanded = uiState.expandedGoalIds.contains(goal.id),
+                    onToggleExpand = { viewModel.toggleGoalExpansion(goal.id) },
                     onStatusChange = { newStatus ->
                         viewModel.updateGoalStatus(goal.id, newStatus)
                     },

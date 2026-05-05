@@ -6,7 +6,7 @@ import com.example.pocketplan.data.local.AppDatabase
 import com.example.pocketplan.data.local.BudgetDao
 import com.example.pocketplan.data.local.CategoryDao
 import com.example.pocketplan.data.local.ExpenseDao
-import com.example.pocketplan.data.local.GoalDao
+import com.example.pocketplan.data.local.dao.GoalDao
 import com.example.pocketplan.data.local.UserDao
 import dagger.Module
 import dagger.Provides

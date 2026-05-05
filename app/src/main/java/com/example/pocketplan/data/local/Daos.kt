@@ -57,18 +57,6 @@ interface CategoryDao {
 }
 
 @Dao
-interface GoalDao {
-    @Query("SELECT * FROM goals WHERE userId = :userId")
-    fun getGoalsByUserId(userId: String): Flow<List<Goal>>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertGoal(goal: Goal)
-
-    @Delete
-    suspend fun deleteGoal(goal: Goal)
-}
-
-@Dao
 interface ExpenseDao {
     @Query("SELECT * FROM expenses WHERE userId = :userId")
     fun getExpensesByUserId(userId: String): Flow<List<Expense>>

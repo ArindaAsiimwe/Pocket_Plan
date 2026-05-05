@@ -211,9 +211,15 @@ fun PocketPlanCard(
     onAmountEdit: (() -> Unit)? = null,
     onProgressChange: ((Double) -> Unit)? = null,
     showStatusSelector: Boolean = true,
+    isExpanded: Boolean = true,
+    onToggleExpand: (() -> Unit)? = null,
     bottomContent: @Composable ColumnScope.() -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    val rotationState by animateFloatAsState(
+        targetValue = if (isExpanded) 180f else 0f, label = "rotation"
+    )
+
     val statusColor = when (status) {
         "PENDING", "Pending" -> Color.Gray
         "IN_PROGRESS", "In Progress" -> SecondaryBlue
@@ -303,75 +309,92 @@ fun PocketPlanCard(
                         fontWeight = FontWeight.Bold
                     )
                 }
-            }
 
-            Column(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 16.dp)
-            ) {
-                if (onProgressChange != null) {
-                    Slider(
-                        value = progressPercent.toFloat(),
-                        onValueChange = { onProgressChange(it.toDouble()) },
-                        valueRange = 0f..100f,
-                        colors = SliderDefaults.colors(
-                            thumbColor = PrimaryBlue,
-                            activeTrackColor = SecondaryBlue,
-                            inactiveTrackColor = ChipUnselected
+                if (onToggleExpand != null) {
+                    IconButton(onClick = onToggleExpand) {
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowDown,
+                            contentDescription = if (isExpanded) "Collapse" else "Expand",
+                            tint = TextSecondary,
+                            modifier = Modifier.rotate(rotationState)
                         )
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                if (showStatusSelector) {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                    
-                    Text(
-                        text = "Update Status",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = TextSecondary
-                    )
-                    
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        listOf("PENDING", "IN_PROGRESS", "COMPLETED").forEach { s ->
-                            val isSelected = (s == status || s == status.uppercase())
-                            val displayText = when(s) {
-                                "PENDING" -> "Pending"
-                                "IN_PROGRESS" -> "In Progress"
-                                "COMPLETED" -> "Completed"
-                                else -> s
-                            }
-                            val chipStatusColor = when (s) {
-                                "PENDING" -> Color.Gray
-                                "IN_PROGRESS" -> SecondaryBlue
-                                "COMPLETED" -> SuccessGreen
-                                else -> SecondaryBlue
-                            }
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = { onStatusChange(s) },
-                                label = { 
-                                    Text(
-                                        text = displayText,
-                                        style = MaterialTheme.typography.labelSmall
-                                    ) 
-                                },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = chipStatusColor.copy(alpha = 0.2f),
-                                    selectedLabelColor = chipStatusColor
-                                )
-                            )
-                        }
                     }
                 }
-                
-                bottomContent()
+            }
+
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 16.dp)
+                ) {
+                    if (onProgressChange != null) {
+                        Slider(
+                            value = progressPercent.toFloat(),
+                            onValueChange = { onProgressChange(it.toDouble()) },
+                            valueRange = 0f..100f,
+                            colors = SliderDefaults.colors(
+                                thumbColor = PrimaryBlue,
+                                activeTrackColor = SecondaryBlue,
+                                inactiveTrackColor = ChipUnselected
+                            )
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    if (showStatusSelector) {
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                        
+                        Text(
+                            text = "Update Status",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = TextSecondary
+                        )
+                        
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf("PENDING", "IN_PROGRESS", "COMPLETED").forEach { s ->
+                                val isSelected = (s == status || s == status.uppercase())
+                                val displayText = when (s) {
+                                    "PENDING" -> "Pending"
+                                    "IN_PROGRESS" -> "In Progress"
+                                    "COMPLETED" -> "Completed"
+                                    else -> s
+                                }
+                                val chipStatusColor = when (s) {
+                                    "PENDING" -> Color.Gray
+                                    "IN_PROGRESS" -> SecondaryBlue
+                                    "COMPLETED" -> SuccessGreen
+                                    else -> SecondaryBlue
+                                }
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { onStatusChange(s) },
+                                    label = {
+                                        Text(
+                                            text = displayText,
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                    },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = chipStatusColor.copy(alpha = 0.2f),
+                                        selectedLabelColor = chipStatusColor
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    
+                    bottomContent()
+                }
             }
         }
     }
@@ -390,6 +413,8 @@ fun GoalCard(
     progressPercent: Double,
     status: String,
     attachedImageUri: String? = null,
+    isExpanded: Boolean = false,
+    onToggleExpand: () -> Unit = {},
     onStatusChange: (String) -> Unit = {},
     onImagePickWithUri: (Uri) -> Unit = {},
     onImageDelete: () -> Unit = {},
@@ -404,6 +429,8 @@ fun GoalCard(
         status = status,
         onStatusChange = onStatusChange,
         icon = icon,
+        isExpanded = isExpanded,
+        onToggleExpand = onToggleExpand,
         bottomContent = {
             Spacer(modifier = Modifier.height(8.dp))
             val goalImageUri = attachedImageUri?.let { Uri.parse(it) }

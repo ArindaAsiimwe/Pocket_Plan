@@ -15,8 +15,13 @@ interface AuthRepository {
 }
 
 interface GoalRepository {
-    fun getGoals(userId: String): Flow<List<Goal>>
-    suspend fun addGoal(goal: Goal)
+    fun getAllGoals(): Flow<List<Goal>>
+    fun getGoalsByStatus(status: String): Flow<List<Goal>>
+    fun getTotalProtectedFunds(): Flow<Long?>
+    suspend fun insertGoal(goal: Goal)
+    suspend fun updateGoal(goal: Goal)
+    suspend fun deleteGoal(goal: Goal)
+    suspend fun getGoalById(id: String): Goal?
 }
 
 interface ExpenseRepository {
