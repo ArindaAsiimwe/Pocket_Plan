@@ -45,7 +45,7 @@ class GoalsViewModel @Inject constructor(
                     0
                 }
                 _uiState.update { it.copy(
-                    goals = goals,
+                    goals = goals.sortedByDescending { goal -> goal.createdAt },
                     portfolioHealthPercent = health,
                     isLoading = false
                 ) }

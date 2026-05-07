@@ -51,7 +51,9 @@ class SemesterBudgetsViewModel @Inject constructor(
         _modalState
     ) { budgetsWithCats, expandedIds, modal ->
         SemesterBudgetsUiState(
-            budgets = budgetsWithCats.map { it.toSummary() },
+            budgets = budgetsWithCats
+                .sortedByDescending { it.budget.createdDate }
+                .map { it.toSummary() },
             expandedBudgetIds = expandedIds,
             isCreateModalOpen = modal.first,
             createName = modal.second,

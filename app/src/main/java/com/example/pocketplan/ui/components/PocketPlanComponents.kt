@@ -348,53 +348,72 @@ fun PocketPlanCard(
 
                     if (showStatusSelector) {
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        
-                        Text(
-                            text = "Update Status",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = TextSecondary
+                        StatusSelector(
+                            status = status,
+                            onStatusChange = onStatusChange
                         )
-                        
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            listOf("PENDING", "IN_PROGRESS", "COMPLETED").forEach { s ->
-                                val isSelected = (s == status || s == status.uppercase())
-                                val displayText = when (s) {
-                                    "PENDING" -> "Pending"
-                                    "IN_PROGRESS" -> "In Progress"
-                                    "COMPLETED" -> "Completed"
-                                    else -> s
-                                }
-                                val chipStatusColor = when (s) {
-                                    "PENDING" -> Color.Gray
-                                    "IN_PROGRESS" -> SecondaryBlue
-                                    "COMPLETED" -> SuccessGreen
-                                    else -> SecondaryBlue
-                                }
-                                FilterChip(
-                                    selected = isSelected,
-                                    onClick = { onStatusChange(s) },
-                                    label = {
-                                        Text(
-                                            text = displayText,
-                                            style = MaterialTheme.typography.labelSmall
-                                        )
-                                    },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = chipStatusColor.copy(alpha = 0.2f),
-                                        selectedLabelColor = chipStatusColor
-                                    )
-                                )
-                            }
-                        }
                     }
                     
                     bottomContent()
                 }
+            }
+        }
+    }
+}
+
+/**
+ * 4b. StatusSelector
+ * Reusable component for selecting/updating status.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StatusSelector(
+    status: String,
+    onStatusChange: (String) -> Unit
+) {
+    val normalizedStatus = status.uppercase().replace(" ", "_")
+    
+    Column {
+        Text(
+            text = "Update Status",
+            style = MaterialTheme.typography.labelMedium,
+            color = TextSecondary
+        )
+        
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            listOf("PENDING", "IN_PROGRESS", "COMPLETED").forEach { s ->
+                val isSelected = (s == normalizedStatus)
+                val displayText = when (s) {
+                    "PENDING" -> "Pending"
+                    "IN_PROGRESS" -> "In Progress"
+                    "COMPLETED" -> "Completed"
+                    else -> s
+                }
+                val chipStatusColor = when (s) {
+                    "PENDING" -> Color.Gray
+                    "IN_PROGRESS" -> SecondaryBlue
+                    "COMPLETED" -> SuccessGreen
+                    else -> SecondaryBlue
+                }
+                FilterChip(
+                    selected = isSelected,
+                    onClick = { onStatusChange(s) },
+                    label = {
+                        Text(
+                            text = displayText,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = chipStatusColor.copy(alpha = 0.2f),
+                        selectedLabelColor = chipStatusColor
+                    )
+                )
             }
         }
     }
@@ -735,12 +754,21 @@ fun BudgetSummaryCard(
                     )
 
                     summary.categories.forEach { category ->
-                        CategoryStatusRow(
-                            category = category,
-                            onStatusChange = { newStatus ->
-                                onStatusChange(category.id, newStatus)
-                            }
-                        )
+                        Column {
+                            CategoryStatusRow(
+                                category = category,
+                                onStatusChange = { newStatus ->
+                                    onStatusChange(category.id, newStatus)
+                                }
+                            )
+                            StatusSelector(
+                                status = category.status.name,
+                                onStatusChange = { newStatus ->
+                                    onStatusChange(category.id, CategoryStatus.valueOf(newStatus))
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
                     }
                 }
             }
