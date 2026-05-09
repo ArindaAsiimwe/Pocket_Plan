@@ -8,11 +8,11 @@ import javax.inject.Inject
 class GoalRepositoryImpl @Inject constructor(
     private val goalDao: GoalDao
 ) : GoalRepository {
-    override fun getAllGoals(): Flow<List<Goal>> = goalDao.getAllGoals()
+    override fun getAllGoals(userId: String): Flow<List<Goal>> = goalDao.getAllGoals(userId)
 
-    override fun getGoalsByStatus(status: String): Flow<List<Goal>> = goalDao.getGoalsByStatus(status)
+    override fun getGoalsByStatus(userId: String, status: String): Flow<List<Goal>> = goalDao.getGoalsByStatus(userId, status)
 
-    override fun getTotalProtectedFunds(): Flow<Long?> = goalDao.getTotalProtectedFunds()
+    override fun getTotalProtectedFunds(userId: String): Flow<Long?> = goalDao.getTotalProtectedFunds(userId)
 
     override suspend fun insertGoal(goal: Goal) {
         goalDao.insertGoal(goal)

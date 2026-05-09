@@ -46,6 +46,9 @@ interface CategoryDao {
     @Query("SELECT * FROM categories WHERE budgetId = :budgetId")
     fun getCategoriesByBudgetId(budgetId: Long): Flow<List<Category>>
 
+    @Query("SELECT * FROM categories WHERE budgetId = :budgetId AND isBudgetCategory = :isBudget")
+    fun getCategoriesByType(budgetId: Long, isBudget: Boolean): Flow<List<Category>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCategory(category: Category)
 
@@ -54,19 +57,4 @@ interface CategoryDao {
 
     @Delete
     suspend fun deleteCategory(category: Category)
-}
-
-@Dao
-interface ExpenseDao {
-    @Query("SELECT * FROM expenses WHERE userId = :userId")
-    fun getExpensesByUserId(userId: String): Flow<List<Expense>>
-
-    @Query("SELECT * FROM expenses WHERE userId = :userId AND date >= :startDate AND date <= :endDate")
-    fun getExpensesInRange(userId: String, startDate: Long, endDate: Long): Flow<List<Expense>>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertExpense(expense: Expense)
-
-    @Delete
-    suspend fun deleteExpense(expense: Expense)
 }

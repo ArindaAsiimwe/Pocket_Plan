@@ -12,8 +12,10 @@ interface BudgetRepository {
     fun getBudgetById(budgetId: Long): Flow<Budget?>
     suspend fun insertBudget(budget: Budget): Long
     suspend fun updateBudget(budget: Budget)
+    suspend fun deleteBudget(budgetId: Long)
 
     fun getCategories(budgetId: Long): Flow<List<Category>>
+    fun getCategoriesByType(budgetId: Long, isBudget: Boolean): Flow<List<Category>>
     suspend fun insertCategory(category: Category)
     suspend fun updateCategory(category: Category)
     suspend fun deleteCategory(category: Category)

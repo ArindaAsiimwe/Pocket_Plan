@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -98,7 +99,9 @@ fun GoalsScreen(
                     },
                     onImageDelete = {
                         viewModel.deleteGoalImage(goal.id)
-                    }
+                    },
+                    modifier = Modifier.padding(vertical = 4.dp),
+                    onCardClick = { viewModel.onGoalClick(goal) }
                 )
             }
 
@@ -109,10 +112,14 @@ fun GoalsScreen(
     }
 
     if (uiState.isAddGoalSheetOpen) {
-        AddGoalModal(
+        GoalEntryModal(
+            editingGoal = uiState.editingGoal,
             onDismiss = { viewModel.onDismissSheet() },
             onSave = { name, amount, date ->
                 viewModel.saveGoal(name, amount, date)
+            },
+            onDelete = {
+                viewModel.deleteEditingGoal()
             }
         )
     }
@@ -120,23 +127,43 @@ fun GoalsScreen(
 
 
 @Composable
-fun AddGoalModal(
+fun GoalEntryModal(
+    editingGoal: com.example.pocketplan.data.model.Goal? = null,
     onDismiss: () -> Unit,
-    onSave: (String, Double, Long) -> Unit
+    onSave: (String, Double, Long) -> Unit,
+    onDelete: () -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
-    var dueDate by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var name by remember { mutableStateOf(editingGoal?.name ?: "") }
+    var amount by remember { mutableStateOf(editingGoal?.targetAmount?.toString() ?: "") }
+    var dueDate by remember { mutableLongStateOf(editingGoal?.dueDate ?: System.currentTimeMillis()) }
     var showDatePicker by remember { mutableStateOf(false) }
+    
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showUpdateConfirmation by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
-                text = "Add New Goal",
-                style = MaterialTheme.typography.headlineSmall,
-                color = TextPrimary
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (editingGoal == null) "Add New Goal" else "Edit Goal",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = TextPrimary
+                )
+                if (editingGoal != null) {
+                    IconButton(onClick = { showDeleteConfirmation = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete Goal",
+                            tint = com.example.pocketplan.ui.theme.ErrorRed
+                        )
+                    }
+                }
+            }
         },
         text = {
             Column(
@@ -174,9 +201,13 @@ fun AddGoalModal(
         },
         confirmButton = {
             PocketPlanButton(
-                text = "Save Goal",
+                text = if (editingGoal == null) "Save Goal" else "Update Goal",
                 onClick = {
-                    onSave(name, amount.toDoubleOrNull() ?: 0.0, dueDate)
+                    if (editingGoal != null) {
+                        showUpdateConfirmation = true
+                    } else {
+                        onSave(name, amount.toDoubleOrNull() ?: 0.0, dueDate)
+                    }
                 },
                 enabled = name.isNotBlank() && amount.isNotBlank()
             )
@@ -201,5 +232,32 @@ fun AddGoalModal(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+
+    if (showDeleteConfirmation) {
+        com.example.pocketplan.ui.components.ConfirmationDialog(
+            title = "Delete Goal",
+            message = "Are you sure you want to delete this goal? This action cannot be undone.",
+            confirmText = "Delete",
+            confirmColor = com.example.pocketplan.ui.theme.ErrorRed,
+            onDismiss = { showDeleteConfirmation = false },
+            onConfirm = {
+                showDeleteConfirmation = false
+                onDelete()
+            }
+        )
+    }
+
+    if (showUpdateConfirmation) {
+        com.example.pocketplan.ui.components.ConfirmationDialog(
+            title = "Update Goal",
+            message = "Do you want to save the changes made to this goal?",
+            confirmText = "Update",
+            onDismiss = { showUpdateConfirmation = false },
+            onConfirm = {
+                showUpdateConfirmation = false
+                onSave(name, amount.toDoubleOrNull() ?: 0.0, dueDate)
+            }
+        )
     }
 }
