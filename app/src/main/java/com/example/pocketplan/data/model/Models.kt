@@ -8,7 +8,8 @@ data class User(
     @PrimaryKey val id: String,
     val name: String,
     val email: String,
-    val passwordHash: String
+    val passwordHash: String,
+    val profilePicPath: String? = null
 )
 
 @Entity(tableName = "expenses")

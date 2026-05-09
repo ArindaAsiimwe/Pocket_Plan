@@ -14,7 +14,7 @@ import com.example.pocketplan.data.local.dao.GoalDao
         Goal::class,
         Expense::class
     ],
-    version = 4
+    version = 5
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {

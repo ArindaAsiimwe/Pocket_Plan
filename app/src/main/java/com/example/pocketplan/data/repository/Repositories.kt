@@ -12,6 +12,9 @@ interface AuthRepository {
     fun getCurrentUser(): Flow<User?>
     suspend fun restoreSession(): User?
     suspend fun logout()
+    suspend fun updateProfilePicture(userId: String, path: String): Result<Unit>
+    suspend fun updateName(userId: String, newName: String): Result<Unit>
+    suspend fun updatePassword(userId: String, newPasswordHash: String): Result<Unit>
 }
 
 interface GoalRepository {

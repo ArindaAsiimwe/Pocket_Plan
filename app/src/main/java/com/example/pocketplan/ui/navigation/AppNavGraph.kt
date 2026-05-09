@@ -23,6 +23,7 @@ import com.example.pocketplan.ui.budget.SemesterBudgetsViewModel
 import com.example.pocketplan.ui.goals.GoalsScreen
 import com.example.pocketplan.ui.tracking.ExpenseTrackingScreen
 import com.example.pocketplan.ui.insights.InsightsScreen
+import com.example.pocketplan.ui.profile.ProfileScreen
 import com.example.pocketplan.ui.theme.PrimaryBlue
 
 @Composable
@@ -78,6 +79,7 @@ fun AppNavGraph(
                 onLoginClick = { navController.popBackStack() }
             )
         }
+
         composable(Screen.SemesterBudgets.route) {
             val budgetViewModel: SemesterBudgetsViewModel = hiltViewModel()
             val authViewModel: AuthViewModel = hiltViewModel()
@@ -112,13 +114,49 @@ fun AppNavGraph(
             )
         }
         composable(Screen.Goals.route) {
-            GoalsScreen()
+            val authViewModel: AuthViewModel = hiltViewModel()
+            GoalsScreen(
+                onLogoutClick = {
+                    authViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
         composable(Screen.Tracking.route) {
-            ExpenseTrackingScreen()
+            val authViewModel: AuthViewModel = hiltViewModel()
+            ExpenseTrackingScreen(
+                onLogoutClick = {
+                    authViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
         composable(Screen.Insights.route) {
-            InsightsScreen()
+            val authViewModel: AuthViewModel = hiltViewModel()
+            InsightsScreen(
+                onLogoutClick = {
+                    authViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(Screen.Profile.route) {
+            val authViewModel: AuthViewModel = hiltViewModel()
+            ProfileScreen(
+                authViewModel = authViewModel,
+                onLogoutClick = {
+                    authViewModel.logout()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }
