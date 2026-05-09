@@ -6,6 +6,7 @@ import com.example.pocketplan.data.model.Budget
 import com.example.pocketplan.data.model.BudgetWithCategories
 import com.example.pocketplan.data.model.Category
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 class BudgetRepositoryImpl @Inject constructor(
@@ -31,8 +32,16 @@ class BudgetRepositoryImpl @Inject constructor(
         budgetDao.updateBudget(budget)
     }
 
+    override suspend fun deleteBudget(budgetId: Long) {
+        val budget = budgetDao.getBudgetById(budgetId).first()
+        budget?.let { budgetDao.deleteBudget(it) }
+    }
+
     override fun getCategories(budgetId: Long): Flow<List<Category>> =
         categoryDao.getCategoriesByBudgetId(budgetId)
+
+    override fun getCategoriesByType(budgetId: Long, isBudget: Boolean): Flow<List<Category>> =
+        categoryDao.getCategoriesByType(budgetId, isBudget)
 
     override suspend fun insertCategory(category: Category) {
         categoryDao.insertCategory(category)

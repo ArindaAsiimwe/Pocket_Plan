@@ -15,9 +15,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.example.pocketplan.ui.components.BudgetSummaryCard
-import com.example.pocketplan.ui.components.PocketPlanButton
-import com.example.pocketplan.ui.components.PocketPlanTopBar
+import androidx.compose.runtime.*
+import com.example.pocketplan.ui.components.*
+import com.example.pocketplan.ui.theme.ErrorRed
 import com.example.pocketplan.ui.theme.BackgroundLight
 import com.example.pocketplan.ui.theme.PrimaryBlue
 import com.example.pocketplan.ui.theme.TextPrimary
@@ -31,6 +31,7 @@ fun SemesterBudgetsScreen(
     onLogoutClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var budgetToDelete by remember { mutableStateOf<BudgetSummary?>(null) }
 
     Scaffold(
         topBar = {
@@ -68,6 +69,8 @@ fun SemesterBudgetsScreen(
                             isExpanded = uiState.expandedBudgetIds.contains(budget.id),
                             onToggleExpand = { viewModel.toggleExpanded(budget.id) },
                             onNavigate = { onBudgetClick(budget.id) },
+                            onEditClick = { viewModel.openEditModal(budget) },
+                            onDeleteClick = { budgetToDelete = budget },
                             onStatusChange = { categoryId, newStatus ->
                                 viewModel.updateCategoryStatus(budget.id, categoryId, newStatus)
                             }
@@ -77,15 +80,30 @@ fun SemesterBudgetsScreen(
             }
         }
 
+        if (budgetToDelete != null) {
+            ConfirmationDialog(
+                title = "Delete Budget",
+                message = "Are you sure you want to delete '${budgetToDelete?.semesterName}'? This action cannot be undone.",
+                confirmText = "Delete",
+                confirmColor = ErrorRed,
+                onConfirm = {
+                    budgetToDelete?.let { viewModel.deleteBudget(it.id) }
+                    budgetToDelete = null
+                },
+                onDismiss = { budgetToDelete = null }
+            )
+        }
+
         if (uiState.isCreateModalOpen) {
             CreateBudgetModal(
                 name = uiState.createName,
                 year = uiState.createYear,
+                isEditing = uiState.editingBudgetId != null,
                 onNameChange = { viewModel.onNameChange(it) },
                 onYearChange = { viewModel.onYearChange(it) },
                 onDismiss = { viewModel.dismissCreateModal() },
                 onConfirm = {
-                    viewModel.createBudget { newId ->
+                    viewModel.handleConfirm { newId ->
                         onCreateConfirmed(newId)
                     }
                 }
@@ -128,6 +146,7 @@ private fun EmptyState() {
 private fun CreateBudgetModal(
     name: String,
     year: String,
+    isEditing: Boolean,
     onNameChange: (String) -> Unit,
     onYearChange: (String) -> Unit,
     onDismiss: () -> Unit,
@@ -137,7 +156,7 @@ private fun CreateBudgetModal(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "New Semester Budget",
+                text = if (isEditing) "Edit Semester Budget" else "New Semester Budget",
                 style = MaterialTheme.typography.headlineSmall,
                 color = TextPrimary
             )
@@ -150,18 +169,20 @@ private fun CreateBudgetModal(
                     label = { Text("e.g. Year 1, Semester 1 (2026)") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = year,
-                    onValueChange = onYearChange,
-                    label = { Text("Year (e.g. 2026)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                if (!isEditing) {
+                    OutlinedTextField(
+                        value = year,
+                        onValueChange = onYearChange,
+                        label = { Text("Year (e.g. 2026)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         },
         confirmButton = {
             PocketPlanButton(
-                text = "Proceed to Setup",
+                text = if (isEditing) "Update Budget" else "Proceed to Setup",
                 onClick = onConfirm,
                 enabled = name.isNotBlank()
             )

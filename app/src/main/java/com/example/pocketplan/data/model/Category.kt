@@ -27,5 +27,6 @@ data class Category(
     val percentage: Double,
     val icon: String = "default",
     val status: CategoryStatus = CategoryStatus.PENDING,
-    val attachedImageUri: String? = null
+    val attachedImageUri: String? = null,
+    val isBudgetCategory: Boolean = true
 )

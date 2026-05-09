@@ -8,11 +8,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -39,7 +44,7 @@ fun InsightsScreen(
     Scaffold(
         topBar = {
             PocketPlanTopBar(
-                title = "Spending Insights",
+                title = "Financial Insights",
                 onNotificationClick = { }
             )
         },
@@ -52,15 +57,156 @@ fun InsightsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            // Section 1: Overview
+            // Section: Spending Overview
             Section1Overview(state)
 
             Spacer(modifier = Modifier.height(24.dp))
+            
+            // Section: Goals Tracking
+            GoalsInsightSection(state)
 
-            // Section 2: Monthly Trend
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Section: Monthly Trend
             Section2MonthlyTrend(state)
             
             Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+fun FinancialHealthSection(state: InsightsUiState) {
+    Column {
+        SectionHeader(title = "Health Snapshot")
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = PrimaryBlue),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "SAFE TO SPEND",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = CurrencyUtils.formatToUGX(state.freeFunds.toDouble()),
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.AccountBalanceWallet,
+                        contentDescription = null,
+                        tint = Color.White.copy(alpha = 0.5f),
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
+                
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 16.dp),
+                    color = Color.White.copy(alpha = 0.2f)
+                )
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = "DAILY ALLOWANCE",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            text = "${CurrencyUtils.formatToUGX(state.dailyAllowance.toDouble())}/day",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "DAYS LEFT",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                        Text(
+                            text = "${state.daysLeft} Days",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun GoalsInsightSection(state: InsightsUiState) {
+    Column {
+        SectionHeader(title = "Micro-Plans & Goals")
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Flag, contentDescription = null, tint = SuccessGreen)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Goal Savings Progress", style = MaterialTheme.typography.titleSmall)
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                val progress = if (state.goalTarget > 0) state.goalProgress.toFloat() / state.goalTarget else 0f
+                
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(12.dp)
+                        .clip(RoundedCornerShape(6.dp)),
+                    color = SuccessGreen,
+                    trackColor = ChipUnselected
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Saved: ${CurrencyUtils.formatToUGX(state.goalProgress.toDouble())}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                    Text(
+                        text = "Target: ${CurrencyUtils.formatToUGX(state.goalTarget.toDouble())}",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 }
@@ -78,89 +224,34 @@ fun Section1Overview(state: InsightsUiState) {
             colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Row(
+            Column(
                 modifier = Modifier
                     .padding(16.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .fillMaxWidth()
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Payments,
-                            contentDescription = null,
-                            tint = TextSecondary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "TOTAL SPENT",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = TextSecondary,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Payments,
+                        contentDescription = null,
+                        tint = TextSecondary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = CurrencyUtils.formatToUGX(state.totalSpent.toDouble()),
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = PrimaryBlue,
+                        text = "TOTAL SPENT",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextSecondary,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(
-                        text = "${state.percentageUsed.toInt()}% of monthly budget",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary
-                    )
                 }
-
-                // Small Donut for percentage
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(80.dp)) {
-                    Canvas(modifier = Modifier.size(60.dp)) {
-                        drawArc(
-                            color = ChipUnselected,
-                            startAngle = 0f,
-                            sweepAngle = 360f,
-                            useCenter = false,
-                            style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)
-                        )
-                        drawArc(
-                            color = PrimaryBlue,
-                            startAngle = -90f,
-                            sweepAngle = (state.percentageUsed / 100f) * 360f,
-                            useCenter = false,
-                            style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round)
-                        )
-                    }
-                    Text(
-                        text = "${state.percentageUsed.toInt()}%",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = PrimaryBlue
-                    )
-                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = CurrencyUtils.formatToUGX(state.totalSpent.toDouble()),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = PrimaryBlue,
+                    fontWeight = FontWeight.Bold
+                )
             }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Stat Cards Side by Side
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            StatCard(
-                label = "REMAINING",
-                value = CurrencyUtils.formatToUGX(state.remaining.toDouble()),
-                modifier = Modifier.weight(1f)
-            )
-            StatCard(
-                label = "DAYS LEFT",
-                value = "${state.daysLeft}",
-                subtitle = "On track",
-                modifier = Modifier.weight(1f)
-            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))

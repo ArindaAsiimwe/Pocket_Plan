@@ -10,13 +10,3 @@ data class User(
     val email: String,
     val passwordHash: String
 )
-
-@Entity(tableName = "expenses")
-data class Expense(
-    @PrimaryKey val id: String,
-    val userId: String,
-    val amount: Double,
-    val categoryId: String,
-    val note: String,
-    val date: Long
-)
