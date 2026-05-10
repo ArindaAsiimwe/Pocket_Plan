@@ -18,7 +18,7 @@ import com.example.pocketplan.data.local.dao.GoalDao
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun userDao(): UserDao
+//    abstract fun userDao(): UserDao
     abstract fun budgetDao(): BudgetDao
     abstract fun categoryDao(): CategoryDao
     abstract fun goalDao(): GoalDao

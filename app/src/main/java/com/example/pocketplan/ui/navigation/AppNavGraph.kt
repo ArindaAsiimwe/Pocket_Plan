@@ -38,7 +38,7 @@ fun AppNavGraph(
         composable(Screen.Login.route) {
             val viewModel: AuthViewModel = hiltViewModel()
             val state by viewModel.uiState.collectAsState()
-            
+
             LaunchedEffect(state.isSuccess) {
                 if (state.isSuccess) {
                     navController.navigate(Screen.SemesterBudgets.route) {
@@ -48,7 +48,6 @@ fun AppNavGraph(
             }
 
             if (!state.isSessionChecked) {
-                // Splash / Initial Loading state
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = PrimaryBlue)
                 }
@@ -56,10 +55,12 @@ fun AppNavGraph(
                 LoginScreen(
                     state = state,
                     onLoginClick = { email, pass -> viewModel.login(email, pass) },
-                    onRegisterClick = { navController.navigate(Screen.Register.route) }
+                    onRegisterClick = { navController.navigate(Screen.Register.route) },
+                    onForgotPasswordClick = { email -> viewModel.sendPasswordReset(email) }
                 )
             }
         }
+
         composable(Screen.Register.route) {
             val viewModel: AuthViewModel = hiltViewModel()
             val state by viewModel.uiState.collectAsState()

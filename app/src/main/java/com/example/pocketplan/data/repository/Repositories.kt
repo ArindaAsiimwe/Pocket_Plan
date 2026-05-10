@@ -7,10 +7,11 @@ import com.example.pocketplan.data.model.User
 import kotlinx.coroutines.flow.Flow
 
 interface AuthRepository {
-    suspend fun login(email: String, passwordHash: String): Result<User>
-    suspend fun register(name: String, email: String, passwordHash: String): Result<User>
+    suspend fun login(email: String, password: String): Result<User>
+    suspend fun register(name: String, email: String, password: String): Result<User>
     fun getCurrentUser(): Flow<User?>
     suspend fun restoreSession(): User?
+    suspend fun sendPasswordReset(email: String): Result<Unit>
     suspend fun logout()
 }
 

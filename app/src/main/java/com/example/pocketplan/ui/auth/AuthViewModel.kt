@@ -98,6 +98,18 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun sendPasswordReset(email: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            val result = authRepository.sendPasswordReset(email)
+            result.onSuccess {
+                _uiState.update { it.copy(isLoading = false, error = "Reset email sent! Check your inbox") }
+            }.onFailure { e ->
+                _uiState.update { it.copy(isLoading = false, error = e.message) }
+            }
+        }
+    }
+
     fun logout() {
         viewModelScope.launch {
             authRepository.logout()
