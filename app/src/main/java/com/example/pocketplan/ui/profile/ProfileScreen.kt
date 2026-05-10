@@ -302,11 +302,11 @@ fun ProfileScreen(
                             .padding(horizontal = 24.dp),
                         horizontalArrangement = Arrangement.spacedBy(32.dp)
                     ) {
-                        ImageSourceOption(
-                            icon = Icons.Default.PhotoCamera,
-                            label = "Camera",
-                            onClick = { cameraLauncher.launch(null) }
-                        )
+//                        ImageSourceOption(
+//                            icon = Icons.Default.PhotoCamera,
+//                            label = "Camera",
+//                            onClick = { cameraLauncher.launch(null) }
+//                        )
                         ImageSourceOption(
                             icon = Icons.Default.PhotoLibrary,
                             label = "Gallery",
