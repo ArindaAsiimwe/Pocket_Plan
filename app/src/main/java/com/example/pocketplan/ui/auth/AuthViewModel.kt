@@ -110,9 +110,27 @@ class AuthViewModel @Inject constructor(
     }
 
     fun updateProfilePicture(path: String) {
-        val userId = uiState.value.user?.id ?: return
+        val userId = uiState.value.user?.id
+        if (userId == null) {
+            _uiState.update { it.copy(error = "User not found") }
+            return
+        }
+
         viewModelScope.launch {
-            authRepository.updateProfilePicture(userId, path)
+            _uiState.update { it.copy(isLoading = true, error = null) }
+
+            val result = authRepository.updateProfilePicture(userId, path)
+
+            result.onSuccess {
+                _uiState.update { it.copy(isLoading = false) }
+            }.onFailure { e ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "Failed to update profile picture"
+                    )
+                }
+            }
         }
     }
 
