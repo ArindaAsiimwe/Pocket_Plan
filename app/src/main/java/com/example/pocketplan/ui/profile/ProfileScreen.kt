@@ -44,7 +44,7 @@ fun ProfileScreen(
     val state by authViewModel.uiState.collectAsState()
     val context = LocalContext.current
     val imageStorageHelper = remember { ImageStorageHelper(context) }
-    
+
     var showImageOptions by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState()
 
@@ -53,8 +53,8 @@ fun ProfileScreen(
     var passwordVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.user) {
-        state.user?.let { 
-            if (name.isEmpty()) name = it.name 
+        state.user?.let {
+            if (name.isEmpty()) name = it.name
         }
     }
 
@@ -138,7 +138,7 @@ fun ProfileScreen(
                         )
                     }
                 }
-                
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -161,7 +161,7 @@ fun ProfileScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             // Name Display
             Text(
                 text = state.user?.name ?: "User",
@@ -255,7 +255,7 @@ fun ProfileScreen(
                     )
 
                     Button(
-                        onClick = { 
+                        onClick = {
                             authViewModel.updatePassword(password)
                             password = ""
                         },
@@ -273,7 +273,7 @@ fun ProfileScreen(
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
         }
 
@@ -295,7 +295,7 @@ fun ProfileScreen(
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
                     )
-                    
+
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

@@ -3,9 +3,6 @@ package com.example.pocketplan.ui.auth
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,10 +10,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pocketplan.ui.theme.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
 
 @Composable
 fun RegisterScreen(
@@ -28,9 +30,9 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var localError by remember { mutableStateOf<String?>(null) }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
-    var localError by remember { mutableStateOf<String?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -85,12 +87,11 @@ fun RegisterScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
+                            focusedTextColor = PrimaryBlue,
+                            unfocusedTextColor = Color.Gray.copy(alpha = 0.5f),
                             focusedBorderColor = PrimaryBlue,
                             unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
-                            focusedLabelColor = PrimaryBlue,
-                            unfocusedLabelColor = TextSecondary
+
                         )
                     )
 
@@ -103,12 +104,10 @@ fun RegisterScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
+                            focusedTextColor = PrimaryBlue,
+                            unfocusedTextColor = Color.Gray.copy(alpha = 0.5f),
                             focusedBorderColor = PrimaryBlue,
-                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
-                            focusedLabelColor = PrimaryBlue,
-                            unfocusedLabelColor = TextSecondary
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                         )
                     )
 
@@ -120,25 +119,21 @@ fun RegisterScreen(
                         label = { Text("Password") },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         trailingIcon = {
-                            val image = if (passwordVisible)
-                                Icons.Filled.Visibility
-                            else Icons.Filled.VisibilityOff
-
-                            val description = if (passwordVisible) "Hide password" else "Show password"
-
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(imageVector = image, contentDescription = description)
+                                Icon(
+                                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                    tint = Color.Gray
+                                )
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
                             focusedBorderColor = PrimaryBlue,
-                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
-                            focusedLabelColor = PrimaryBlue,
-                            unfocusedLabelColor = TextSecondary
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                         )
                     )
 
@@ -150,25 +145,21 @@ fun RegisterScreen(
                         label = { Text("Confirm Password") },
                         visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         trailingIcon = {
-                            val image = if (confirmPasswordVisible)
-                                Icons.Filled.Visibility
-                            else Icons.Filled.VisibilityOff
-
-                            val description = if (confirmPasswordVisible) "Hide password" else "Show password"
-
                             IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                                Icon(imageVector = image, contentDescription = description)
+                                Icon(
+                                    imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password",
+                                    tint = Color.Gray
+                                )
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
                             focusedBorderColor = PrimaryBlue,
-                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
-                            focusedLabelColor = PrimaryBlue,
-                            unfocusedLabelColor = TextSecondary
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                         )
                     )
 

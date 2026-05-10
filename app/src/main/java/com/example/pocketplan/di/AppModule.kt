@@ -7,7 +7,7 @@ import com.example.pocketplan.data.local.BudgetDao
 import com.example.pocketplan.data.local.CategoryDao
 import com.example.pocketplan.data.local.dao.ExpenseDao
 import com.example.pocketplan.data.local.dao.GoalDao
-import com.example.pocketplan.data.local.UserDao
+//import com.example.pocketplan.data.local.UserDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,8 +30,8 @@ object AppModule {
             .build()
     }
 
-    @Provides
-    fun provideUserDao(db: AppDatabase): UserDao = db.userDao()
+//    @Provides
+//    fun provideUserDao(db: AppDatabase): UserDao = db.userDao()
 
     @Provides
     fun provideBudgetDao(db: AppDatabase): BudgetDao = db.budgetDao()

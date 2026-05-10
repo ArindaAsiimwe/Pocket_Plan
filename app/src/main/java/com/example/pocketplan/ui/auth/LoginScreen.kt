@@ -3,9 +3,6 @@ package com.example.pocketplan.ui.auth
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,16 +10,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.pocketplan.ui.theme.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+
 
 @Composable
 fun LoginScreen(
     state: AuthUiState,
     onLoginClick: (String, String) -> Unit,
-    onRegisterClick: () -> Unit
+    onRegisterClick: () -> Unit,
+    onForgotPasswordClick: (String) -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -80,12 +85,10 @@ fun LoginScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
+                            focusedTextColor = PrimaryBlue,
+                            unfocusedTextColor = Color.Gray.copy(alpha = 0.5f),
                             focusedBorderColor = PrimaryBlue,
-                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
-                            focusedLabelColor = PrimaryBlue,
-                            unfocusedLabelColor = TextSecondary
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                         )
                     )
 
@@ -97,32 +100,27 @@ fun LoginScreen(
                         label = { Text("Password") },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         trailingIcon = {
-                            val image = if (passwordVisible)
-                                Icons.Filled.Visibility
-                            else Icons.Filled.VisibilityOff
-
-                            val description = if (passwordVisible) "Hide password" else "Show password"
-
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                Icon(imageVector = image, contentDescription = description)
+                                Icon(
+                                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                                )
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary,
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
                             focusedBorderColor = PrimaryBlue,
-                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
-                            focusedLabelColor = PrimaryBlue,
-                            unfocusedLabelColor = TextSecondary
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
                         )
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
-                    
+
                     TextButton(
-                        onClick = { /* Handle forgot password */ },
+                        onClick = { onForgotPasswordClick(email) },
                         modifier = Modifier.align(Alignment.End)
                     ) {
                         Text("Forgot Password?", color = PrimaryBlue)

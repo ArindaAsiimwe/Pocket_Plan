@@ -31,15 +31,23 @@ fun AppNavGraph(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+    val authViewModel: AuthViewModel = hiltViewModel()
+
+    val onLogout: () -> Unit = {
+        authViewModel.logout()
+        navController.navigate(Screen.Login.route) {
+            popUpTo(0) { inclusive = true }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = Screen.Login.route,
         modifier = modifier
     ) {
         composable(Screen.Login.route) {
-            val viewModel: AuthViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsState()
-            
+            val state by authViewModel.uiState.collectAsState()
+
             LaunchedEffect(state.isSuccess) {
                 if (state.isSuccess) {
                     navController.navigate(Screen.SemesterBudgets.route) {
@@ -49,21 +57,21 @@ fun AppNavGraph(
             }
 
             if (!state.isSessionChecked) {
-                // Splash / Initial Loading state
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = PrimaryBlue)
                 }
             } else {
                 LoginScreen(
                     state = state,
-                    onLoginClick = { email, pass -> viewModel.login(email, pass) },
-                    onRegisterClick = { navController.navigate(Screen.Register.route) }
+                    onLoginClick = { email, pass -> authViewModel.login(email, pass) },
+                    onRegisterClick = { navController.navigate(Screen.Register.route) },
+                    onForgotPasswordClick = { email -> authViewModel.sendPasswordReset(email) }
                 )
             }
         }
+
         composable(Screen.Register.route) {
-            val viewModel: AuthViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsState()
+            val state by authViewModel.uiState.collectAsState()
 
             LaunchedEffect(state.isSuccess) {
                 if (state.isSuccess) {
@@ -75,15 +83,13 @@ fun AppNavGraph(
 
             RegisterScreen(
                 state = state,
-                onRegisterClick = { name, email, pass -> viewModel.register(name, email, pass) },
+                onRegisterClick = { name, email, pass -> authViewModel.register(name, email, pass) },
                 onLoginClick = { navController.popBackStack() }
             )
         }
 
         composable(Screen.SemesterBudgets.route) {
             val budgetViewModel: SemesterBudgetsViewModel = hiltViewModel()
-            val authViewModel: AuthViewModel = hiltViewModel()
-            
             SemesterBudgetsScreen(
                 viewModel = budgetViewModel,
                 onBudgetClick = { budgetId ->
@@ -92,70 +98,36 @@ fun AppNavGraph(
                 onCreateConfirmed = { budgetId ->
                     navController.navigate(Screen.BudgetSetup.createRoute(budgetId))
                 },
-                onLogoutClick = {
-                    authViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
+                onLogoutClick = onLogout
             )
         }
+
         composable(Screen.BudgetSetup.route) { backStackEntry ->
             val viewModel: BudgetViewModel = hiltViewModel()
             val budgetId = backStackEntry.arguments?.getString("budgetId")?.toLongOrNull() ?: 0L
-            
-            LaunchedEffect(budgetId) {
-                viewModel.loadBudget(budgetId)
-            }
-
+            LaunchedEffect(budgetId) { viewModel.loadBudget(budgetId) }
             BudgetSetupScreen(
                 viewModel = viewModel,
                 onBack = { navController.popBackStack() }
             )
         }
+
         composable(Screen.Goals.route) {
-            val authViewModel: AuthViewModel = hiltViewModel()
-            GoalsScreen(
-                onLogoutClick = {
-                    authViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
-            )
+            GoalsScreen(onLogoutClick = onLogout)
         }
+
         composable(Screen.Tracking.route) {
-            val authViewModel: AuthViewModel = hiltViewModel()
-            ExpenseTrackingScreen(
-                onLogoutClick = {
-                    authViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
-            )
+            ExpenseTrackingScreen(onLogoutClick = onLogout)
         }
+
         composable(Screen.Insights.route) {
-            val authViewModel: AuthViewModel = hiltViewModel()
-            InsightsScreen(
-                onLogoutClick = {
-                    authViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
-            )
+            InsightsScreen(onLogoutClick = onLogout)
         }
+
         composable(Screen.Profile.route) {
-            val authViewModel: AuthViewModel = hiltViewModel()
             ProfileScreen(
                 authViewModel = authViewModel,
-                onLogoutClick = {
-                    authViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
+                onLogoutClick = onLogout
             )
         }
     }

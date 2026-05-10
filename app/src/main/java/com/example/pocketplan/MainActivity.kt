@@ -23,11 +23,14 @@ import com.example.pocketplan.ui.navigation.Screen
 import com.example.pocketplan.ui.theme.PocketPlanTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableStateFlow
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val db = Firebase.firestore
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {

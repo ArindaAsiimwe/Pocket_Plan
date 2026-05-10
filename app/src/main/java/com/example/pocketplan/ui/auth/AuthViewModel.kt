@@ -18,7 +18,7 @@ data class AuthUiState(
     val error: String? = null,
     val isSuccess: Boolean = false,
     val isSessionChecked: Boolean = false,
-    val user: User? = null
+    val user: User? = null  // 👈 added
 )
 
 @HiltViewModel
@@ -30,22 +30,13 @@ class AuthViewModel @Inject constructor(
 
     init {
         checkSession()
-        observeUser()
-    }
-
-    private fun observeUser() {
-        viewModelScope.launch {
-            authRepository.getCurrentUser().collect { user ->
-                _uiState.update { it.copy(user = user) }
-            }
-        }
     }
 
     private fun checkSession() {
         viewModelScope.launch {
             val user = authRepository.restoreSession()
             if (user != null) {
-                _uiState.update { it.copy(isSuccess = true, isSessionChecked = true) }
+                _uiState.update { it.copy(isSuccess = true, isSessionChecked = true, user = user) }
             } else {
                 _uiState.update { it.copy(isSessionChecked = true) }
             }
@@ -61,19 +52,15 @@ class AuthViewModel @Inject constructor(
             _uiState.update { it.copy(error = "Please fill in all fields") }
             return
         }
-
         if (!isValidEmail(email)) {
             _uiState.update { it.copy(error = "Please enter a valid email address") }
             return
         }
-
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            
             val result = authRepository.login(email, pass)
-            
-            result.onSuccess {
-                _uiState.update { it.copy(isLoading = false, isSuccess = true) }
+            result.onSuccess { user ->
+                _uiState.update { it.copy(isLoading = false, isSuccess = true, user = user) }
             }.onFailure { e ->
                 _uiState.update { it.copy(isLoading = false, error = e.message ?: "Login failed") }
             }
@@ -85,83 +72,86 @@ class AuthViewModel @Inject constructor(
             _uiState.update { it.copy(error = "Please fill in all fields") }
             return
         }
-
         if (!isValidEmail(email)) {
             _uiState.update { it.copy(error = "Please enter a valid email address") }
             return
         }
-        
         if (pass.length < 6) {
             _uiState.update { it.copy(error = "Password must be at least 6 characters") }
             return
         }
-
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            
             val result = authRepository.register(name, email, pass)
-            
-            result.onSuccess {
-                _uiState.update { it.copy(isLoading = false, isSuccess = true) }
+            result.onSuccess { user ->
+                _uiState.update { it.copy(isLoading = false, isSuccess = true, user = user) }
             }.onFailure { e ->
                 _uiState.update { it.copy(isLoading = false, error = e.message ?: "Registration failed") }
             }
         }
     }
 
-    fun updateProfilePicture(path: String) {
-        val userId = uiState.value.user?.id
-        if (userId == null) {
-            _uiState.update { it.copy(error = "User not found") }
-            return
-        }
-
+    fun sendPasswordReset(email: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-
-            val result = authRepository.updateProfilePicture(userId, path)
-
+            val result = authRepository.sendPasswordReset(email)
             result.onSuccess {
-                _uiState.update { it.copy(isLoading = false) }
+                _uiState.update { it.copy(isLoading = false, error = "Reset email sent! Check your inbox") }
             }.onFailure { e ->
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        error = e.message ?: "Failed to update profile picture"
-                    )
-                }
+                _uiState.update { it.copy(isLoading = false, error = e.message) }
             }
         }
     }
 
     fun updateName(newName: String) {
-        val userId = uiState.value.user?.id ?: return
-        if (newName.isBlank()) return
-        
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            val result = authRepository.updateName(userId, newName)
-
+            val result = authRepository.updateName(newName)
             result.onSuccess {
-                _uiState.update { it.copy(isLoading = false) }
+                _uiState.update { it.copy(
+                    isLoading = false,
+                    user = it.user?.copy(name = newName),
+                    error = "Name updated successfully"
+                )}
             }.onFailure { e ->
-                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Name update failed") }
+                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Failed to update name") }
             }
         }
     }
 
     fun updatePassword(newPassword: String) {
-        val userId = uiState.value.user?.id ?: return
         if (newPassword.length < 6) {
             _uiState.update { it.copy(error = "Password must be at least 6 characters") }
             return
         }
-
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            authRepository.updatePassword(userId, newPassword)
-            _uiState.update { it.copy(isLoading = false) }
+            val result = authRepository.updatePassword(newPassword)
+            result.onSuccess {
+                _uiState.update { it.copy(isLoading = false, error = "Password updated successfully") }
+            }.onFailure { e ->
+                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Failed to update password") }
+            }
         }
+    }
+
+    fun updateProfilePicture(path: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            val result = authRepository.updateProfilePicture(path)
+            result.onSuccess {
+                _uiState.update { it.copy(
+                    isLoading = false,
+                    user = it.user?.copy(profilePicPath = path)
+                )}
+            }.onFailure { e ->
+                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Failed to update picture") }
+            }
+        }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(error = null) }
     }
 
     fun logout() {
@@ -171,7 +161,7 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun clearError() {
-        _uiState.update { it.copy(error = null) }
+    fun resetState() {
+        _uiState.update { it.copy(error = null, isSuccess = false) }
     }
 }
