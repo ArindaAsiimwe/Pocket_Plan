@@ -236,7 +236,7 @@ fun ProfileScreen(
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
                                 Icon(
                                     imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                                    contentDescription = null,
+                                    contentDescription = if (passwordVisible) "Hide password" else "Show password",
                                     tint = TextSecondary
                                 )
                             }
