@@ -88,4 +88,37 @@ class AuthRepositoryImpl @Inject constructor(
         firebaseAuth.signOut()
         _currentUser.value = null
     }
+
+    override suspend fun updateName(newName: String): Result<Unit> {
+        return try {
+            val uid = firebaseAuth.currentUser!!.uid
+            firestore.collection("users").document(uid)
+                .set(mapOf("name" to newName), com.google.firebase.firestore.SetOptions.merge())
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(Exception(e.message ?: "Failed to update name"))
+        }
+    }
+
+    override suspend fun updatePassword(newPassword: String): Result<Unit> {
+        return try {
+            firebaseAuth.currentUser!!.updatePassword(newPassword).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(Exception(e.message ?: "Failed to update password"))
+        }
+    }
+
+    override suspend fun updateProfilePicture(path: String): Result<Unit> {
+        return try {
+            val uid = firebaseAuth.currentUser!!.uid
+            firestore.collection("users").document(uid)
+                .set(mapOf("profilePicPath" to path), com.google.firebase.firestore.SetOptions.merge())
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(Exception(e.message ?: "Failed to update picture"))
+        }
+    }
 }

@@ -13,6 +13,9 @@ interface AuthRepository {
     suspend fun restoreSession(): User?
     suspend fun sendPasswordReset(email: String): Result<Unit>
     suspend fun logout()
+    suspend fun updateName(newName: String): Result<Unit>
+    suspend fun updatePassword(newPassword: String): Result<Unit>
+    suspend fun updateProfilePicture(path: String): Result<Unit>
 }
 
 interface GoalRepository {

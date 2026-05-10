@@ -9,13 +9,12 @@ import com.example.pocketplan.data.local.dao.ExpenseDao
 
 @Database(
     entities = [
-        User::class,
         Budget::class,
         Category::class,
         Goal::class,
         Expense::class
     ],
-    version = 5
+    version = 6
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {

@@ -23,6 +23,7 @@ import com.example.pocketplan.ui.budget.SemesterBudgetsViewModel
 import com.example.pocketplan.ui.goals.GoalsScreen
 import com.example.pocketplan.ui.tracking.ExpenseTrackingScreen
 import com.example.pocketplan.ui.insights.InsightsScreen
+import com.example.pocketplan.ui.profile.ProfileScreen
 import com.example.pocketplan.ui.theme.PrimaryBlue
 
 @Composable
@@ -30,14 +31,22 @@ fun AppNavGraph(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+    val authViewModel: AuthViewModel = hiltViewModel()
+
+    val onLogout: () -> Unit = {
+        authViewModel.logout()
+        navController.navigate(Screen.Login.route) {
+            popUpTo(0) { inclusive = true }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = Screen.Login.route,
         modifier = modifier
     ) {
         composable(Screen.Login.route) {
-            val viewModel: AuthViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsState()
+            val state by authViewModel.uiState.collectAsState()
 
             LaunchedEffect(state.isSuccess) {
                 if (state.isSuccess) {
@@ -54,16 +63,15 @@ fun AppNavGraph(
             } else {
                 LoginScreen(
                     state = state,
-                    onLoginClick = { email, pass -> viewModel.login(email, pass) },
+                    onLoginClick = { email, pass -> authViewModel.login(email, pass) },
                     onRegisterClick = { navController.navigate(Screen.Register.route) },
-                    onForgotPasswordClick = { email -> viewModel.sendPasswordReset(email) }
+                    onForgotPasswordClick = { email -> authViewModel.sendPasswordReset(email) }
                 )
             }
         }
 
         composable(Screen.Register.route) {
-            val viewModel: AuthViewModel = hiltViewModel()
-            val state by viewModel.uiState.collectAsState()
+            val state by authViewModel.uiState.collectAsState()
 
             LaunchedEffect(state.isSuccess) {
                 if (state.isSuccess) {
@@ -75,14 +83,13 @@ fun AppNavGraph(
 
             RegisterScreen(
                 state = state,
-                onRegisterClick = { name, email, pass -> viewModel.register(name, email, pass) },
+                onRegisterClick = { name, email, pass -> authViewModel.register(name, email, pass) },
                 onLoginClick = { navController.popBackStack() }
             )
         }
+
         composable(Screen.SemesterBudgets.route) {
             val budgetViewModel: SemesterBudgetsViewModel = hiltViewModel()
-            val authViewModel: AuthViewModel = hiltViewModel()
-            
             SemesterBudgetsScreen(
                 viewModel = budgetViewModel,
                 onBudgetClick = { budgetId ->
@@ -91,35 +98,37 @@ fun AppNavGraph(
                 onCreateConfirmed = { budgetId ->
                     navController.navigate(Screen.BudgetSetup.createRoute(budgetId))
                 },
-                onLogoutClick = {
-                    authViewModel.logout()
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
+                onLogoutClick = onLogout
             )
         }
+
         composable(Screen.BudgetSetup.route) { backStackEntry ->
             val viewModel: BudgetViewModel = hiltViewModel()
             val budgetId = backStackEntry.arguments?.getString("budgetId")?.toLongOrNull() ?: 0L
-            
-            LaunchedEffect(budgetId) {
-                viewModel.loadBudget(budgetId)
-            }
-
+            LaunchedEffect(budgetId) { viewModel.loadBudget(budgetId) }
             BudgetSetupScreen(
                 viewModel = viewModel,
                 onBack = { navController.popBackStack() }
             )
         }
+
         composable(Screen.Goals.route) {
-            GoalsScreen()
+            GoalsScreen(onLogoutClick = onLogout)
         }
+
         composable(Screen.Tracking.route) {
-            ExpenseTrackingScreen()
+            ExpenseTrackingScreen(onLogoutClick = onLogout)
         }
+
         composable(Screen.Insights.route) {
-            InsightsScreen()
+            InsightsScreen(onLogoutClick = onLogout)
+        }
+
+        composable(Screen.Profile.route) {
+            ProfileScreen(
+                authViewModel = authViewModel,
+                onLogoutClick = onLogout
+            )
         }
     }
 }

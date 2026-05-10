@@ -1,6 +1,7 @@
 package com.example.pocketplan.utils
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -26,6 +27,24 @@ class ImageStorageHelper @Inject constructor(
                 FileOutputStream(file).use { outputStream ->
                     inputStream.copyTo(outputStream)
                 }
+            }
+            file.absolutePath
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    /**
+     * Saves a Bitmap to the app's internal storage.
+     */
+    fun saveBitmapToInternalStorage(bitmap: Bitmap): String? {
+        return try {
+            val fileName = "img_${UUID.randomUUID()}.jpg"
+            val file = File(context.filesDir, fileName)
+            
+            FileOutputStream(file).use { outputStream ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream)
             }
             file.absolutePath
         } catch (e: Exception) {

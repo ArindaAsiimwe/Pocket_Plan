@@ -28,6 +28,7 @@ import com.google.firebase.firestore.firestore
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val db = Firebase.firestore
         super.onCreate(savedInstanceState)
