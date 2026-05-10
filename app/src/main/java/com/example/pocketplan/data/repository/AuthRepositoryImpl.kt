@@ -59,4 +59,52 @@ class AuthRepositoryImpl @Inject constructor(
         sessionManager.clearSession()
         _currentUser.value = null
     }
+
+    override suspend fun updateProfilePicture(userId: String, path: String): Result<Unit> {
+        return try {
+            val user = userDao.getUserById(userId)
+            if (user != null) {
+                val updatedUser = user.copy(profilePicPath = path)
+                userDao.insertUser(updatedUser)
+                _currentUser.value = updatedUser
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("User not found"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateName(userId: String, newName: String): Result<Unit> {
+        return try {
+            val user = userDao.getUserById(userId)
+            if (user != null) {
+                val updatedUser = user.copy(name = newName)
+                userDao.insertUser(updatedUser)
+                _currentUser.value = updatedUser
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("User not found"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updatePassword(userId: String, newPasswordHash: String): Result<Unit> {
+        return try {
+            val user = userDao.getUserById(userId)
+            if (user != null) {
+                val updatedUser = user.copy(passwordHash = newPasswordHash)
+                userDao.insertUser(updatedUser)
+                _currentUser.value = updatedUser
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("User not found"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

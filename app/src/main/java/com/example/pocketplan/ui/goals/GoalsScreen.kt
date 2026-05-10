@@ -39,13 +39,18 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GoalsScreen(
-    viewModel: GoalsViewModel = hiltViewModel()
+    viewModel: GoalsViewModel = hiltViewModel(),
+    onLogoutClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
-            PocketPlanTopBar(title = "Goals", onNotificationClick = {})
+            PocketPlanTopBar(
+                title = "Goals",
+                onNotificationClick = {},
+                onLogoutClick = onLogoutClick
+            )
         },
         floatingActionButton = {
             FloatingActionButton(

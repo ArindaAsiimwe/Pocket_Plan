@@ -946,10 +946,11 @@ fun StatusChip(status: CategoryStatus, onClick: () -> Unit) {
 @Composable
 fun PocketPlanBottomBar(navController: NavHostController) {
     val items = listOf(
-        PocketNavItem("Budgets", Screen.SemesterBudgets.route, Icons.Default.AccountBalance),
         PocketNavItem("Tracking", Screen.Tracking.route, Icons.AutoMirrored.Filled.ReceiptLong),
         PocketNavItem("Goals", Screen.Goals.route, Icons.Default.Flag),
-        PocketNavItem("Insights", Screen.Insights.route, Icons.Default.BarChart)
+        PocketNavItem("Budgets", Screen.SemesterBudgets.route, Icons.Default.AccountBalance),
+        PocketNavItem("Insights", Screen.Insights.route, Icons.Default.BarChart),
+        PocketNavItem("Profile", Screen.Profile.route, Icons.Default.Person)
     )
 
     Surface(

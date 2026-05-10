@@ -37,7 +37,8 @@ import com.patrykandpatrick.vico.core.entry.entryOf
 
 @Composable
 fun InsightsScreen(
-    viewModel: InsightsViewModel = hiltViewModel()
+    viewModel: InsightsViewModel = hiltViewModel(),
+    onLogoutClick: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -45,7 +46,8 @@ fun InsightsScreen(
         topBar = {
             PocketPlanTopBar(
                 title = "Financial Insights",
-                onNotificationClick = { }
+                onNotificationClick = { },
+                onLogoutClick = onLogoutClick
             )
         },
         containerColor = BackgroundLight

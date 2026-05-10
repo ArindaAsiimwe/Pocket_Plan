@@ -34,7 +34,8 @@ import com.example.pocketplan.ui.theme.*
 
 @Composable
 fun ExpenseTrackingScreen(
-    viewModel: ExpenseTrackingViewModel = hiltViewModel()
+    viewModel: ExpenseTrackingViewModel = hiltViewModel(),
+    onLogoutClick: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
@@ -43,7 +44,8 @@ fun ExpenseTrackingScreen(
         topBar = {
             PocketPlanTopBar(
                 title = "All Expenses",
-                onNotificationClick = { }
+                onNotificationClick = { },
+                onLogoutClick = onLogoutClick
             )
         },
         containerColor = BackgroundLight,
