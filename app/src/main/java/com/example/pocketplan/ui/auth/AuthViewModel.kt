@@ -139,9 +139,14 @@ class AuthViewModel @Inject constructor(
         if (newName.isBlank()) return
         
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-            authRepository.updateName(userId, newName)
-            _uiState.update { it.copy(isLoading = false) }
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            val result = authRepository.updateName(userId, newName)
+
+            result.onSuccess {
+                _uiState.update { it.copy(isLoading = false) }
+            }.onFailure { e ->
+                _uiState.update { it.copy(isLoading = false, error = e.message ?: "Name update failed") }
+            }
         }
     }
 
