@@ -63,18 +63,20 @@ class AuthRepositoryImpl @Inject constructor(
         val firebaseUser = firebaseAuth.currentUser ?: return null
         return try {
             val doc = firestore.collection("users").document(firebaseUser.uid).get().await()
+
             val user = User(
                 id = firebaseUser.uid,
                 name = doc.getString("name") ?: "",
-                email = firebaseUser.email ?: ""
+                email = firebaseUser.email ?: "",
+                profilePicPath = doc.getString("profilePicPath")
             )
             _currentUser.value = user
             user
         } catch (e: Exception) {
+            android.util.Log.e("AUTH", "Error: ${e.message}")
             null
         }
     }
-
     override suspend fun sendPasswordReset(email: String): Result<Unit> {
         return try {
             firebaseAuth.sendPasswordResetEmail(email).await()
