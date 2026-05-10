@@ -94,7 +94,7 @@ fun ProfileScreen(
             PocketPlanTopBar(
                 title = "Profile",
                 onNotificationClick = { },
-                onLogoutClick = null
+                onLogoutClick = onLogoutClick
             )
         },
         containerColor = BackgroundLight
