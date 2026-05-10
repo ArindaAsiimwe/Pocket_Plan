@@ -939,74 +939,146 @@ fun StatusChip(status: CategoryStatus, onClick: () -> Unit) {
     }
 }
 
-/**l
+/**
  * 12. PocketPlanBottomBar
  * Reusable bottom navigation bar that is docked to the bottom of the screen.
  */
 @Composable
 fun PocketPlanBottomBar(navController: NavHostController) {
-    val items = listOf(
-        PocketNavItem("Tracking", Screen.Tracking.route, Icons.AutoMirrored.Filled.ReceiptLong),
-        PocketNavItem("Goals", Screen.Goals.route, Icons.Default.Flag),
-        PocketNavItem("Budgets", Screen.SemesterBudgets.route, Icons.Default.AccountBalance),
-        PocketNavItem("Insights", Screen.Insights.route, Icons.Default.BarChart),
-        PocketNavItem("Profile", Screen.Profile.route, Icons.Default.Person)
-    )
+    val items = remember {
+        listOf(
+            PocketNavItem("Tracking", Screen.Tracking.route, Icons.AutoMirrored.Filled.ReceiptLong),
+            PocketNavItem("Goals", Screen.Goals.route, Icons.Default.Flag),
+            PocketNavItem("Budgets", Screen.SemesterBudgets.route, Icons.Default.AccountBalance),
+            PocketNavItem("Insights", Screen.Insights.route, Icons.Default.BarChart),
+            PocketNavItem("Profile", Screen.Profile.route, Icons.Default.Person)
+        )
+    }
 
-    Surface(
-        color = Color.White,
-        tonalElevation = 0.dp
-    ) {
-        Column {
-            HorizontalDivider(color = ChipUnselected.copy(alpha = 0.5f), thickness = 1.dp)
-            NavigationBar(
-                containerColor = Color.Transparent,
-                tonalElevation = 0.dp,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
-                items.forEach { item ->
-                    val isSelected = currentRoute == item.route || (item.route == Screen.SemesterBudgets.route && currentRoute?.startsWith("budget_setup") == true)
-                    
-                    NavigationBarItem(
-                        selected = isSelected,
-                        onClick = {
-                            if (currentRoute != item.route) {
-                                navController.navigate(item.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            }
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = item.title
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = item.title,
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                )
-                            )
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = PrimaryBlue,
-                            selectedTextColor = PrimaryBlue,
-                            unselectedIconColor = TextSecondary,
-                            unselectedTextColor = TextSecondary,
-                            indicatorColor = SecondaryBlue.copy(alpha = 0.1f)
-                        )
-                    )
+    val navigateTo = remember(navController) {
+        { route: String ->
+            if (currentRoute != route) {
+                navController.navigate(route) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
                 }
             }
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding(),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        // Main Navigation Bar Background
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(64.dp),
+            color = Color.White,
+            tonalElevation = 8.dp,
+            shadowElevation = 12.dp,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                items.forEachIndexed { index, item ->
+                    val isSelected = currentRoute == item.route || 
+                        (item.route == Screen.SemesterBudgets.route && currentRoute?.startsWith("budget_setup") == true)
+                    
+                    if (index == 2) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    } else {
+                        PocketBottomNavItem(
+                            item = item,
+                            isSelected = isSelected,
+                            onClick = { navigateTo(item.route) },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Unique Elevated "Budgets" Button
+        val budgetItem = items[2]
+        val isBudgetSelected = currentRoute == budgetItem.route || currentRoute?.startsWith("budget_setup") == true
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 12.dp)
+                .offset(y = (-16).dp)
+        ) {
+            FloatingActionButton(
+                onClick = { navigateTo(budgetItem.route) },
+                shape = CircleShape,
+                containerColor = if (isBudgetSelected) PrimaryBlue else Color.White,
+                contentColor = if (isBudgetSelected) Color.White else PrimaryBlue,
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp),
+                modifier = Modifier.size(56.dp)
+            ) {
+                Icon(
+                    imageVector = budgetItem.icon,
+                    contentDescription = budgetItem.title,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = budgetItem.title,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = if (isBudgetSelected) FontWeight.Bold else FontWeight.Medium,
+                    fontSize = 11.sp
+                ),
+                color = if (isBudgetSelected) PrimaryBlue else TextSecondary
+            )
+        }
+    }
+}
+
+@Composable
+private fun PocketBottomNavItem(
+    item: PocketNavItem,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = item.icon,
+                contentDescription = item.title,
+                tint = if (isSelected) PrimaryBlue else TextSecondary,
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = item.title,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    fontSize = 10.sp
+                ),
+                color = if (isSelected) PrimaryBlue else TextSecondary
+            )
         }
     }
 }
