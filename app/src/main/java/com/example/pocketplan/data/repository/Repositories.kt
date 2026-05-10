@@ -16,16 +16,11 @@ interface AuthRepository {
 }
 
 interface GoalRepository {
-    fun getAllGoals(): Flow<List<Goal>>
-    fun getGoalsByStatus(status: String): Flow<List<Goal>>
-    fun getTotalProtectedFunds(): Flow<Long?>
+    fun getAllGoals(userId: String): Flow<List<Goal>>
+    fun getGoalsByStatus(userId: String, status: String): Flow<List<Goal>>
+    fun getTotalProtectedFunds(userId: String): Flow<Long?>
     suspend fun insertGoal(goal: Goal)
     suspend fun updateGoal(goal: Goal)
     suspend fun deleteGoal(goal: Goal)
     suspend fun getGoalById(id: String): Goal?
-}
-
-interface ExpenseRepository {
-    fun getExpenses(userId: String): Flow<List<Expense>>
-    suspend fun addExpense(expense: Expense)
 }

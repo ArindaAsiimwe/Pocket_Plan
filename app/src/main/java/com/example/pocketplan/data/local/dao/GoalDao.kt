@@ -6,14 +6,14 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface GoalDao {
-    @Query("SELECT * FROM goals ORDER BY createdAt DESC")
-    fun getAllGoals(): Flow<List<Goal>>
+    @Query("SELECT * FROM goals WHERE userId = :userId ORDER BY createdAt DESC")
+    fun getAllGoals(userId: String): Flow<List<Goal>>
 
-    @Query("SELECT CAST(SUM(targetAmount) AS INTEGER) FROM goals")
-    fun getTotalProtectedFunds(): Flow<Long?>
+    @Query("SELECT CAST(SUM(targetAmount) AS INTEGER) FROM goals WHERE userId = :userId")
+    fun getTotalProtectedFunds(userId: String): Flow<Long?>
 
-    @Query("SELECT * FROM goals WHERE status = :status")
-    fun getGoalsByStatus(status: String): Flow<List<Goal>>
+    @Query("SELECT * FROM goals WHERE userId = :userId AND status = :status")
+    fun getGoalsByStatus(userId: String, status: String): Flow<List<Goal>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertGoal(goal: Goal)

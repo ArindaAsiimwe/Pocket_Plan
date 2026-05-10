@@ -22,6 +22,7 @@ data class GoalsUiState(
     val expandedGoalIds: Set<String> = emptySet(),
     val portfolioHealthPercent: Int = 0,
     val isAddGoalSheetOpen: Boolean = false,
+    val editingGoal: Goal? = null,
     val attachedImageUri: Uri? = null,
     val error: String? = null
 )
@@ -34,9 +35,12 @@ class GoalsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(GoalsUiState(isLoading = true))
     val uiState: StateFlow<GoalsUiState> = _uiState.asStateFlow()
 
+    // Until real auth is wired in, all goals are associated with this placeholder user.
+    private val currentUserId = "default_user"
+
     init {
         viewModelScope.launch {
-            goalRepository.getAllGoals().collect { goals ->
+            goalRepository.getAllGoals(currentUserId).collect { goals ->
                 val totalTarget = goals.sumOf { it.targetAmount }
                 val totalProgress = goals.sumOf { it.currentProgress }
                 val health = if (totalTarget > 0) {
@@ -54,7 +58,17 @@ class GoalsViewModel @Inject constructor(
     }
 
     fun onAddGoalClick() {
-        _uiState.update { it.copy(isAddGoalSheetOpen = true) }
+        _uiState.update { it.copy(isAddGoalSheetOpen = true, editingGoal = null, attachedImageUri = null) }
+    }
+
+    fun onGoalClick(goal: Goal) {
+        _uiState.update { 
+            it.copy(
+                isAddGoalSheetOpen = true, 
+                editingGoal = goal,
+                attachedImageUri = goal.imagePath?.let { path -> Uri.parse(path) }
+            )
+        }
     }
 
     fun toggleGoalExpansion(goalId: String) {
@@ -69,7 +83,7 @@ class GoalsViewModel @Inject constructor(
     }
 
     fun onDismissSheet() {
-        _uiState.update { it.copy(isAddGoalSheetOpen = false, attachedImageUri = null) }
+        _uiState.update { it.copy(isAddGoalSheetOpen = false, editingGoal = null, attachedImageUri = null) }
     }
 
     fun onImagePicked(uri: Uri?) {
@@ -119,25 +133,41 @@ class GoalsViewModel @Inject constructor(
     }
 
     fun saveGoal(name: String, amount: Double, dueDate: Long) {
-        val attachedPath = _uiState.value.attachedImageUri?.path // Get the actual file path
-        val newGoal = Goal(
-            id = UUID.randomUUID().toString(),
-            userId = "user1", // Should ideally come from an AuthRepository
-            name = name,
-            targetAmount = amount,
-            currentProgress = 0.0,
-            status = GoalStatus.PENDING,
-            dueDate = dueDate,
-            imagePath = attachedPath,
-            createdAt = System.currentTimeMillis()
-        )
+        val currentEditingGoal = _uiState.value.editingGoal
+        val attachedPath = _uiState.value.attachedImageUri?.path
+        
+        val goalToSave = if (currentEditingGoal != null) {
+            currentEditingGoal.copy(
+                name = name,
+                targetAmount = amount,
+                dueDate = dueDate,
+                imagePath = attachedPath ?: currentEditingGoal.imagePath
+            )
+        } else {
+            Goal(
+                id = UUID.randomUUID().toString(),
+                userId = "default_user",
+                name = name,
+                targetAmount = amount,
+                currentProgress = 0.0,
+                status = GoalStatus.PENDING,
+                dueDate = dueDate,
+                imagePath = attachedPath,
+                createdAt = System.currentTimeMillis()
+            )
+        }
         
         viewModelScope.launch {
             try {
-                goalRepository.insertGoal(newGoal)
+                if (currentEditingGoal != null) {
+                    goalRepository.updateGoal(goalToSave)
+                } else {
+                    goalRepository.insertGoal(goalToSave)
+                }
                 _uiState.update { 
                     it.copy(
                         isAddGoalSheetOpen = false,
+                        editingGoal = null,
                         attachedImageUri = null
                     )
                 }
@@ -147,12 +177,24 @@ class GoalsViewModel @Inject constructor(
         }
     }
 
-    fun deleteGoal(goal: Goal) {
+    fun deleteEditingGoal() {
+        val goal = _uiState.value.editingGoal ?: return
         viewModelScope.launch {
-            goal.imagePath?.let {
-                imageStorageHelper.deleteImageFromInternalStorage(it)
+            try {
+                goal.imagePath?.let {
+                    imageStorageHelper.deleteImageFromInternalStorage(it)
+                }
+                goalRepository.deleteGoal(goal)
+                _uiState.update { 
+                    it.copy(
+                        isAddGoalSheetOpen = false,
+                        editingGoal = null,
+                        attachedImageUri = null
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = e.message) }
             }
-            goalRepository.deleteGoal(goal)
         }
     }
 }

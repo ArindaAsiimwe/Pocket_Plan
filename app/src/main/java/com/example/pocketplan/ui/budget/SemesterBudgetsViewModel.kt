@@ -17,6 +17,7 @@ data class SemesterBudgetsUiState(
     val budgets: List<BudgetSummary> = emptyList(),
     val expandedBudgetIds: Set<Long> = emptySet(),
     val isCreateModalOpen: Boolean = false,
+    val editingBudgetId: Long? = null,
     val createName: String = "",
     val createYear: String = ""
 )
@@ -43,19 +44,22 @@ class SemesterBudgetsViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _expandedBudgetIds = MutableStateFlow<Set<Long>>(emptySet())
-    private val _modalState = MutableStateFlow(Triple(false, "", "")) // isOpen, name, year
+    private val _modalState = MutableStateFlow(Triple<Long?, String, String>(null, "", "")) // editingId, name, year
+    private val _isModalOpen = MutableStateFlow(false)
 
     val uiState: StateFlow<SemesterBudgetsUiState> = combine(
         repository.getAllBudgetsWithCategories(),
         _expandedBudgetIds,
-        _modalState
-    ) { budgetsWithCats, expandedIds, modal ->
+        _modalState,
+        _isModalOpen
+    ) { budgetsWithCats, expandedIds, modal, isOpen ->
         SemesterBudgetsUiState(
             budgets = budgetsWithCats
                 .sortedByDescending { it.budget.createdDate }
                 .map { it.toSummary() },
             expandedBudgetIds = expandedIds,
-            isCreateModalOpen = modal.first,
+            isCreateModalOpen = isOpen,
+            editingBudgetId = modal.first,
             createName = modal.second,
             createYear = modal.third
         )
@@ -66,11 +70,17 @@ class SemesterBudgetsViewModel @Inject constructor(
     )
 
     fun openCreateModal() {
-        _modalState.update { it.copy(first = true, second = "", third = "") }
+        _modalState.value = Triple(null, "", "")
+        _isModalOpen.value = true
+    }
+
+    fun openEditModal(budget: BudgetSummary) {
+        _modalState.value = Triple(budget.id, budget.semesterName, "")
+        _isModalOpen.value = true
     }
 
     fun dismissCreateModal() {
-        _modalState.update { it.copy(first = false) }
+        _isModalOpen.value = false
     }
 
     fun onNameChange(name: String) {
@@ -81,7 +91,16 @@ class SemesterBudgetsViewModel @Inject constructor(
         _modalState.update { it.copy(third = year) }
     }
 
-    fun createBudget(onComplete: (Long) -> Unit) {
+    fun handleConfirm(onComplete: (Long) -> Unit) {
+        val (editingId, name, _) = _modalState.value
+        if (editingId == null) {
+            createBudget(onComplete)
+        } else {
+            updateBudget(editingId, name)
+        }
+    }
+
+    private fun createBudget(onComplete: (Long) -> Unit) {
         viewModelScope.launch {
             val (_, name, _) = _modalState.value
             val newBudget = Budget(
@@ -93,6 +112,22 @@ class SemesterBudgetsViewModel @Inject constructor(
             val id = repository.insertBudget(newBudget)
             dismissCreateModal()
             onComplete(id)
+        }
+    }
+
+    private fun updateBudget(budgetId: Long, newName: String) {
+        viewModelScope.launch {
+            val budget = repository.getBudgetById(budgetId).first()
+            budget?.let {
+                repository.updateBudget(it.copy(semesterName = newName))
+            }
+            dismissCreateModal()
+        }
+    }
+
+    fun deleteBudget(budgetId: Long) {
+        viewModelScope.launch {
+            repository.deleteBudget(budgetId)
         }
     }
 
@@ -132,6 +167,6 @@ private fun com.example.pocketplan.data.model.BudgetWithCategories.toSummary(): 
         monthCount = budget.selectedMonths.size,
         allocationStatus = status,
         createdDate = dateFormat.format(Date(budget.createdDate)),
-        categories = categories
+        categories = categories.filter { it.isBudgetCategory }
     )
 }
