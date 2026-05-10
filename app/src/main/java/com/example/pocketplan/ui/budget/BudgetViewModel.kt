@@ -64,8 +64,8 @@ class BudgetViewModel @Inject constructor(
         }
 
         categoriesJob = viewModelScope.launch {
-            repository.getCategories(budgetId).collectLatest { categories ->
-                _uiState.update { it.copy(categories = categories) }
+            repository.getCategoriesByType(budgetId, true).collectLatest { categories ->
+                _uiState.update { it.copy(categories = categories.sortedByDescending { it.id }) }
             }
         }
     }

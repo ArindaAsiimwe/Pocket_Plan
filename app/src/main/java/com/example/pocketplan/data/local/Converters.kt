@@ -1,6 +1,8 @@
 package com.example.pocketplan.data.local
 
 import androidx.room.TypeConverter
+import com.example.pocketplan.data.model.CategoryStatus
+import com.example.pocketplan.data.model.ExpenseStatus
 import com.example.pocketplan.data.model.GoalStatus
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -38,5 +40,25 @@ class Converters {
     @TypeConverter
     fun toGoalStatus(status: String): GoalStatus {
         return GoalStatus.valueOf(status)
+    }
+
+    @TypeConverter
+    fun fromExpenseStatus(status: ExpenseStatus): String {
+        return status.name
+    }
+
+    @TypeConverter
+    fun toExpenseStatus(status: String): ExpenseStatus {
+        return ExpenseStatus.valueOf(status)
+    }
+
+    @TypeConverter
+    fun fromCategoryStatus(status: CategoryStatus): String {
+        return status.name
+    }
+
+    @TypeConverter
+    fun toCategoryStatus(status: String): CategoryStatus {
+        return CategoryStatus.valueOf(status)
     }
 }

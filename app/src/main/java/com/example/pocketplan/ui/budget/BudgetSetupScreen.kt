@@ -273,11 +273,29 @@ fun SetupView(
         )
     }
 
+    var showDeleteCategoryConfirm by remember { mutableStateOf(false) }
+    var showUpdateCategoryConfirm by remember { mutableStateOf(false) }
+
     if (showEditCategoryAmountDialog && selectedCategoryForEdit != null) {
         var amountText by remember { mutableStateOf(selectedCategoryForEdit!!.allocatedAmount.toString()) }
         AlertDialog(
             onDismissRequest = { showEditCategoryAmountDialog = false },
-            title = { Text("Edit ${selectedCategoryForEdit!!.name} Amount") },
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Edit ${selectedCategoryForEdit!!.name}")
+                    IconButton(onClick = { showDeleteCategoryConfirm = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete Category",
+                            tint = ErrorRed
+                        )
+                    }
+                }
+            },
             text = {
                 OutlinedTextField(
                     value = amountText,
@@ -289,16 +307,43 @@ fun SetupView(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    amountText.toDoubleOrNull()?.let {
-                        viewModel.updateCategoryAmount(selectedCategoryForEdit!!.id, it)
-                    }
-                    showEditCategoryAmountDialog = false
+                    showUpdateCategoryConfirm = true
                 }) { Text("Update") }
             },
             dismissButton = {
                 TextButton(onClick = { showEditCategoryAmountDialog = false }) { Text("Cancel") }
             }
         )
+
+        if (showUpdateCategoryConfirm) {
+            ConfirmationDialog(
+                title = "Update Category",
+                message = "Are you sure you want to update the amount for ${selectedCategoryForEdit!!.name}?",
+                onConfirm = {
+                    amountText.toDoubleOrNull()?.let {
+                        viewModel.updateCategoryAmount(selectedCategoryForEdit!!.id, it)
+                    }
+                    showUpdateCategoryConfirm = false
+                    showEditCategoryAmountDialog = false
+                },
+                onDismiss = { showUpdateCategoryConfirm = false }
+            )
+        }
+
+        if (showDeleteCategoryConfirm) {
+            ConfirmationDialog(
+                title = "Delete Category",
+                message = "Are you sure you want to delete the category ${selectedCategoryForEdit!!.name}?",
+                confirmText = "Delete",
+                confirmColor = ErrorRed,
+                onConfirm = {
+                    viewModel.removeCategory(selectedCategoryForEdit!!)
+                    showDeleteCategoryConfirm = false
+                    showEditCategoryAmountDialog = false
+                },
+                onDismiss = { showDeleteCategoryConfirm = false }
+            )
+        }
     }
 }
 

@@ -1,5 +1,9 @@
 package com.example.pocketplan.ui.tracking
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -69,7 +73,13 @@ fun ExpenseTrackingScreen(
                 .padding(paddingValues)
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            AllExpensesList(state.recentExpenses)
+            AllExpensesList(
+                expenses = state.recentExpenses,
+                onExpenseClick = { expense ->
+                    viewModel.onExpenseClick(expense)
+                    showAddDialog = true
+                }
+            )
         }
     }
 
@@ -78,7 +88,7 @@ fun ExpenseTrackingScreen(
             state = state,
             viewModel = viewModel,
             onDismiss = { showAddDialog = false },
-            onSaveSuccess = { }
+            onSaveSuccess = { showAddDialog = false }
         )
     }
 }
@@ -90,7 +100,10 @@ private const val COLLAPSED_ITEM_COUNT = 5
  * and shows a "Show More" / "Show Less" toggle once the list exceeds [COLLAPSED_ITEM_COUNT].
  */
 @Composable
-fun AllExpensesList(expenses: List<Expense>) {
+fun AllExpensesList(
+    expenses: List<Expense>,
+    onExpenseClick: (Expense) -> Unit
+) {
 
     var expanded by remember { mutableStateOf(false) }
 
@@ -129,7 +142,8 @@ fun AllExpensesList(expenses: List<Expense>) {
                     Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = SurfaceWhite,
-                        tonalElevation = 0.dp
+                        tonalElevation = 0.dp,
+                        onClick = { onExpenseClick(expense) }
                     ) {
                         ExpenseListItem(
                             categoryIcon = icon,
@@ -225,6 +239,9 @@ fun AddExpenseDialog(
     onDismiss: () -> Unit,
     onSaveSuccess: () -> Unit
 ) {
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showUpdateConfirmation by remember { mutableStateOf(false) }
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -249,17 +266,28 @@ fun AddExpenseDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Track Expense",
+                        text = if (state.editingExpenseId == null) "Track Expense" else "Edit Expense",
                         style = MaterialTheme.typography.titleLarge,
                         color = TextPrimary,
                         fontWeight = FontWeight.SemiBold
                     )
-                    IconButton(onClick = onDismiss) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Close",
-                            tint = TextSecondary
-                        )
+                    Row {
+                        if (state.editingExpenseId != null) {
+                            IconButton(onClick = { showDeleteConfirmation = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete Expense",
+                                    tint = ErrorRed
+                                )
+                            }
+                        }
+                        IconButton(onClick = onDismiss) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = TextSecondary
+                            )
+                        }
                     }
                 }
 
@@ -269,13 +297,47 @@ fun AddExpenseDialog(
                     state = state,
                     viewModel = viewModel,
                     onSave = {
-                        if (viewModel.saveExpense()) {
-                            onSaveSuccess()
+                        if (state.editingExpenseId != null) {
+                            showUpdateConfirmation = true
+                        } else {
+                            if (viewModel.saveExpense()) {
+                                onSaveSuccess()
+                            }
                         }
                     }
                 )
             }
         }
+    }
+
+    if (showDeleteConfirmation) {
+        ConfirmationDialog(
+            title = "Delete Expense",
+            message = "Are you sure you want to delete this expense? This action cannot be undone.",
+            confirmText = "Delete",
+            confirmColor = ErrorRed,
+            onDismiss = { showDeleteConfirmation = false },
+            onConfirm = {
+                viewModel.deleteExpense()
+                showDeleteConfirmation = false
+                onSaveSuccess()
+            }
+        )
+    }
+
+    if (showUpdateConfirmation) {
+        ConfirmationDialog(
+            title = "Update Expense",
+            message = "Do you want to save the changes made to this expense?",
+            confirmText = "Update",
+            onDismiss = { showUpdateConfirmation = false },
+            onConfirm = {
+                if (viewModel.saveExpense()) {
+                    showUpdateConfirmation = false
+                    onSaveSuccess()
+                }
+            }
+        )
     }
 }
 
@@ -362,7 +424,7 @@ fun AddExpenseForm(
                     onClick = { viewModel.onCategorySelected(category) },
                     label = {
                         Text(
-                            text = category,
+                            text = category.name,
                             maxLines = 1,
                             softWrap = false
                         )
@@ -432,7 +494,7 @@ fun AddExpenseForm(
 
         // Save Button (REUSABLE) — always enabled so the user can tap and see inline errors
         PocketPlanButton(
-            text = "Save Expense",
+            text = if (state.editingExpenseId == null) "Save Expense" else "Update Expense",
             onClick = onSave
         )
     }

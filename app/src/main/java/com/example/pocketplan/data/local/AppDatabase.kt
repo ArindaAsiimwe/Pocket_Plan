@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.pocketplan.data.model.*
 import com.example.pocketplan.data.local.dao.GoalDao
+import com.example.pocketplan.data.local.dao.ExpenseDao
 
 @Database(
     entities = [

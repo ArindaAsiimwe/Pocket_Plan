@@ -11,13 +11,3 @@ data class User(
     val passwordHash: String,
     val profilePicPath: String? = null
 )
-
-@Entity(tableName = "expenses")
-data class Expense(
-    @PrimaryKey val id: String,
-    val userId: String,
-    val amount: Double,
-    val categoryId: String,
-    val note: String,
-    val date: Long
-)

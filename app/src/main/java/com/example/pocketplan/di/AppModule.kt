@@ -5,7 +5,7 @@ import androidx.room.Room
 import com.example.pocketplan.data.local.AppDatabase
 import com.example.pocketplan.data.local.BudgetDao
 import com.example.pocketplan.data.local.CategoryDao
-import com.example.pocketplan.data.local.ExpenseDao
+import com.example.pocketplan.data.local.dao.ExpenseDao
 import com.example.pocketplan.data.local.dao.GoalDao
 import com.example.pocketplan.data.local.UserDao
 import dagger.Module

@@ -8,6 +8,6 @@ class AddExpenseUseCase @Inject constructor(
     private val expenseRepository: ExpenseRepository
 ) {
     suspend operator fun invoke(expense: Expense) {
-        expenseRepository.addExpense(expense)
+        expenseRepository.insertExpense(expense)
     }
 }

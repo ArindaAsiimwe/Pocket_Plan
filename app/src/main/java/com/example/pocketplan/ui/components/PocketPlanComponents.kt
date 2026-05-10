@@ -348,53 +348,72 @@ fun PocketPlanCard(
 
                     if (showStatusSelector) {
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        
-                        Text(
-                            text = "Update Status",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = TextSecondary
+                        StatusSelector(
+                            status = status,
+                            onStatusChange = onStatusChange
                         )
-                        
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            listOf("PENDING", "IN_PROGRESS", "COMPLETED").forEach { s ->
-                                val isSelected = (s == status || s == status.uppercase())
-                                val displayText = when (s) {
-                                    "PENDING" -> "Pending"
-                                    "IN_PROGRESS" -> "In Progress"
-                                    "COMPLETED" -> "Completed"
-                                    else -> s
-                                }
-                                val chipStatusColor = when (s) {
-                                    "PENDING" -> Color.Gray
-                                    "IN_PROGRESS" -> SecondaryBlue
-                                    "COMPLETED" -> SuccessGreen
-                                    else -> SecondaryBlue
-                                }
-                                FilterChip(
-                                    selected = isSelected,
-                                    onClick = { onStatusChange(s) },
-                                    label = {
-                                        Text(
-                                            text = displayText,
-                                            style = MaterialTheme.typography.labelSmall
-                                        )
-                                    },
-                                    colors = FilterChipDefaults.filterChipColors(
-                                        selectedContainerColor = chipStatusColor.copy(alpha = 0.2f),
-                                        selectedLabelColor = chipStatusColor
-                                    )
-                                )
-                            }
-                        }
                     }
                     
                     bottomContent()
                 }
+            }
+        }
+    }
+}
+
+/**
+ * 4b. StatusSelector
+ * Reusable component for selecting/updating status.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StatusSelector(
+    status: String,
+    onStatusChange: (String) -> Unit
+) {
+    val normalizedStatus = status.uppercase().replace(" ", "_")
+    
+    Column {
+        Text(
+            text = "Update Status",
+            style = MaterialTheme.typography.labelMedium,
+            color = TextSecondary
+        )
+        
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            listOf("PENDING", "IN_PROGRESS", "COMPLETED").forEach { s ->
+                val isSelected = (s == normalizedStatus)
+                val displayText = when (s) {
+                    "PENDING" -> "Pending"
+                    "IN_PROGRESS" -> "In Progress"
+                    "COMPLETED" -> "Completed"
+                    else -> s
+                }
+                val chipStatusColor = when (s) {
+                    "PENDING" -> Color.Gray
+                    "IN_PROGRESS" -> SecondaryBlue
+                    "COMPLETED" -> SuccessGreen
+                    else -> SecondaryBlue
+                }
+                FilterChip(
+                    selected = isSelected,
+                    onClick = { onStatusChange(s) },
+                    label = {
+                        Text(
+                            text = displayText,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = chipStatusColor.copy(alpha = 0.2f),
+                        selectedLabelColor = chipStatusColor
+                    )
+                )
             }
         }
     }
@@ -418,6 +437,7 @@ fun GoalCard(
     onStatusChange: (String) -> Unit = {},
     onImagePickWithUri: (Uri) -> Unit = {},
     onImageDelete: () -> Unit = {},
+    onCardClick: () -> Unit = {},
     icon: ImageVector = Icons.Default.Flag,
     modifier: Modifier = Modifier
 ) {
@@ -431,6 +451,7 @@ fun GoalCard(
         icon = icon,
         isExpanded = isExpanded,
         onToggleExpand = onToggleExpand,
+        modifier = modifier.clickable { onCardClick() },
         bottomContent = {
             Spacer(modifier = Modifier.height(8.dp))
             val goalImageUri = attachedImageUri?.let { Uri.parse(it) }
@@ -445,8 +466,7 @@ fun GoalCard(
                     }
                 }
             )
-        },
-        modifier = modifier
+        }
     )
 }
 
@@ -522,7 +542,38 @@ fun AddCategoryDialog(
 }
 
 /**
- * 7. ExpenseListItem
+ * 7. ConfirmationDialog
+ * Generic confirmation dialog for destructive or important actions.
+ */
+@Composable
+fun ConfirmationDialog(
+    title: String,
+    message: String,
+    confirmText: String = "Confirm",
+    dismissText: String = "Cancel",
+    confirmColor: Color = PrimaryBlue,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { Text(message) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(confirmText, color = confirmColor, fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(dismissText, color = TextSecondary)
+            }
+        }
+    )
+}
+
+/**
+ * 8. ExpenseListItem
  * Single row item for expenses.
  */
 @Composable
@@ -643,6 +694,8 @@ fun BudgetSummaryCard(
     isExpanded: Boolean,
     onToggleExpand: () -> Unit,
     onNavigate: () -> Unit,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     onStatusChange: (categoryId: Long, newStatus: CategoryStatus) -> Unit
 ) {
     val rotationState by animateFloatAsState(
@@ -704,14 +757,32 @@ fun BudgetSummaryCard(
                         color = TextSecondary
                     )
                 }
-                
-                IconButton(onClick = onToggleExpand) {
-                    Icon(
-                        imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.ChevronRight,
-                        contentDescription = if (isExpanded) "Collapse" else "Expand",
-                        tint = TextSecondary,
-                        modifier = Modifier.rotate(rotationState)
-                    )
+
+                Row {
+                    IconButton(onClick = onEditClick) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit Budget",
+                            tint = PrimaryBlue,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    IconButton(onClick = onDeleteClick) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete Budget",
+                            tint = ErrorRed,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    IconButton(onClick = onToggleExpand) {
+                        Icon(
+                            imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.ChevronRight,
+                            contentDescription = if (isExpanded) "Collapse" else "Expand",
+                            tint = TextSecondary,
+                            modifier = Modifier.rotate(rotationState)
+                        )
+                    }
                 }
             }
 
@@ -735,12 +806,21 @@ fun BudgetSummaryCard(
                     )
 
                     summary.categories.forEach { category ->
-                        CategoryStatusRow(
-                            category = category,
-                            onStatusChange = { newStatus ->
-                                onStatusChange(category.id, newStatus)
-                            }
-                        )
+                        Column {
+                            CategoryStatusRow(
+                                category = category,
+                                onStatusChange = { newStatus ->
+                                    onStatusChange(category.id, newStatus)
+                                }
+                            )
+                            StatusSelector(
+                                status = category.status.name,
+                                onStatusChange = { newStatus ->
+                                    onStatusChange(category.id, CategoryStatus.valueOf(newStatus))
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
                     }
                 }
             }
